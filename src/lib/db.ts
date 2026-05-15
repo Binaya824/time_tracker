@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+// Import all models here so Mongoose registers their schemas before any
+// populate() call — prevents "Schema hasn't been registered" errors.
+import "@/lib/models/User";
+import "@/lib/models/Project";
+import "@/lib/models/Task";
+import "@/lib/models/TimeEntry";
+import "@/lib/models/Comment";
+
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {

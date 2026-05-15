@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Badge from "@/components/Badge";
 import Modal from "@/components/Modal";
 import Link from "next/link";
+import TaskComments from "@/components/TaskComments";
 
 interface User { _id: string; name: string; email: string; }
 interface Task {
@@ -367,6 +368,11 @@ export default function ManagerProjectDetailPage() {
                               )}
                             </div>
                           )}
+                        </div>
+
+                        {/* Comments */}
+                        <div className="mt-3">
+                          <TaskComments taskId={t._id} />
                         </div>
                       </div>
                     );

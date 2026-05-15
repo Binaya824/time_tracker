@@ -6,9 +6,10 @@ interface ModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  size?: "md" | "xl";
 }
 
-export default function Modal({ title, onClose, children }: ModalProps) {
+export default function Modal({ title, onClose, children, size = "md" }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,14 +20,16 @@ export default function Modal({ title, onClose, children }: ModalProps) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  const maxW = size === "xl" ? "max-w-4xl" : "max-w-lg";
+
   return (
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+      <div className={`bg-white rounded-2xl shadow-xl w-full ${maxW} max-h-[90vh] flex flex-col`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
           <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
           <button
             onClick={onClose}
@@ -35,7 +38,7 @@ export default function Modal({ title, onClose, children }: ModalProps) {
             ✕
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

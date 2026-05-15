@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import Badge from "@/components/Badge";
 import Timer from "@/components/Timer";
+import TimeLog from "@/components/TimeLog";
 import Modal from "@/components/Modal";
+import TaskComments from "@/components/TaskComments";
 
 interface Task {
   _id: string;
@@ -20,6 +22,8 @@ export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [activeTab, setActiveTab] = useState<"timer" | "log" | "comments">("timer");
+  const [logRefreshTick, setLogRefreshTick] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
@@ -35,6 +39,8 @@ export default function EmployeeDashboard() {
 
   const openTask = (task: Task) => {
     setSelectedTask(task);
+    setActiveTab("timer");
+    setLogRefreshTick(0);
   };
 
   const updateStatus = async (taskId: string, status: string) => {
@@ -179,30 +185,67 @@ export default function EmployeeDashboard() {
         )}
       </div>
 
-      {/* Task detail + timer modal */}
+      {/* Task detail modal */}
       {selectedTask && (
         <Modal
           title={selectedTask.title}
+          size="xl"
           onClose={() => {
             setSelectedTask(null);
             fetchTasks();
           }}
         >
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge variant={selectedTask.priority} />
-              <Badge variant={selectedTask.status} />
-              <span className="text-xs text-slate-500 ml-auto">{selectedTask.project.name}</span>
-            </div>
+          {/* Meta row */}
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-100 bg-slate-50">
+            <Badge variant={selectedTask.priority} />
+            <Badge variant={selectedTask.status} />
+            <span className="text-xs text-slate-400 ml-auto">{selectedTask.project.name}</span>
+          </div>
 
-            {selectedTask.description && (
-              <p className="text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
+          {selectedTask.description && (
+            <div className="px-6 pt-4">
+              <p className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-4 py-3">
                 {selectedTask.description}
               </p>
-            )}
+            </div>
+          )}
 
-            {/* Timer + Time Log (fully self-contained, no parent state) */}
-            <Timer taskId={selectedTask._id} taskTitle={selectedTask.title} />
+          {/* Tabs */}
+          <div className="flex border-b border-slate-200 px-6 pt-4 gap-1">
+            {(["timer", "log", "comments"] as const).map((tab) => {
+              const labels = { timer: "⏱ Timer", log: "📋 Time Log", comments: "💬 Comments" };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? "border-blue-600 text-blue-600 bg-blue-50"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {labels[tab]}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab panels — use CSS visibility so Timer stays mounted & interval keeps running */}
+          <div>
+            <div className={activeTab === "timer" ? "block" : "hidden"}>
+              <Timer
+                taskId={selectedTask._id}
+                onAction={() => setLogRefreshTick((n) => n + 1)}
+              />
+            </div>
+            <div className={activeTab === "log" ? "block" : "hidden"}>
+              <TimeLog taskId={selectedTask._id} refreshTick={logRefreshTick} />
+            </div>
+            <div className={activeTab === "comments" ? "block" : "hidden"}>
+              <div className="p-6">
+                <TaskComments taskId={selectedTask._id} />
+              </div>
+            </div>
           </div>
         </Modal>
       )}
