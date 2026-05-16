@@ -66,7 +66,7 @@ export default async function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-900">{p.name}</p>
                     <p className="text-xs text-slate-400">
-                      {(p.managers as { name: string }[]).map((m) => m.name).join(", ") || "No manager"}
+                      {(p.managers as unknown as { name: string }[]).map((m) => m.name).join(", ") || "No manager"}
                     </p>
                   </div>
                   <Badge variant={p.status as "active" | "completed" | "on_hold"} />

@@ -20,7 +20,7 @@ export default function Modal({ title, onClose, children, size = "md" }: ModalPr
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const maxW = size === "xl" ? "max-w-4xl" : "max-w-lg";
+  const maxW = size === "xl" ? "max-w-4xl" : "max-w-2xl";
 
   return (
     <div
@@ -38,7 +38,7 @@ export default function Modal({ title, onClose, children, size = "md" }: ModalPr
             ✕
           </button>
         </div>
-        <div className="overflow-y-auto flex-1">{children}</div>
+        <div className="overflow-y-auto flex-1 px-6 py-4">{children}</div>
       </div>
     </div>
   );

@@ -65,7 +65,7 @@ export default async function ManagerDashboard() {
 
                 <div className="flex items-center gap-4 text-sm text-slate-600 mb-4">
                   <span>📋 {projectTasks.length} tasks</span>
-                  <span>👥 {(p.employees as { name: string }[]).length} employees</span>
+                  <span>👥 {(p.employees as unknown as { name: string }[]).length} employees</span>
                 </div>
 
                 <Link

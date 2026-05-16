@@ -43,7 +43,7 @@ export default async function AdminProjectDetailPage({
   const timeByTask: Record<string, Record<string, { name: string; seconds: number }>> = {};
   for (const e of timeEntries) {
     const tid = e.task.toString();
-    const u = e.user as { _id: { toString(): string }; name: string; email: string };
+    const u = e.user as unknown as { _id: { toString(): string }; name: string; email: string };
     const uid = u._id.toString();
     if (!timeByTask[tid]) timeByTask[tid] = {};
     if (!timeByTask[tid][uid]) timeByTask[tid][uid] = { name: u.name, seconds: 0 };
@@ -71,7 +71,7 @@ export default async function AdminProjectDetailPage({
           <div>
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Managers</p>
             <div className="space-y-1">
-              {(project.managers as { _id: string; name: string; email: string }[]).map((m) => (
+              {(project.managers as unknown as { _id: string; name: string; email: string }[]).map((m) => (
                 <p key={m._id} className="text-sm text-slate-700">{m.name} <span className="text-slate-400">({m.email})</span></p>
               ))}
               {project.managers.length === 0 && <p className="text-sm text-slate-400">None assigned</p>}
@@ -80,7 +80,7 @@ export default async function AdminProjectDetailPage({
           <div>
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Employees ({project.employees.length})</p>
             <div className="space-y-1">
-              {(project.employees as { _id: string; name: string; email: string }[]).slice(0, 5).map((e) => (
+              {(project.employees as unknown as { _id: string; name: string; email: string }[]).slice(0, 5).map((e) => (
                 <p key={e._id} className="text-sm text-slate-700">{e.name}</p>
               ))}
               {project.employees.length > 5 && (
@@ -120,7 +120,7 @@ export default async function AdminProjectDetailPage({
                   <div>
                     <p className="text-xs text-slate-400 mb-1">Assigned to</p>
                     <p className="text-slate-700">
-                      {(t.assignedTo as { name: string }[]).map((u) => u.name).join(", ") || "Unassigned"}
+                      {(t.assignedTo as unknown as { name: string }[]).map((u) => u.name).join(", ") || "Unassigned"}
                     </p>
                   </div>
                   <div>

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     // Compute total seconds per user per task
     const summary: Record<string, { name: string; email: string; totalSeconds: number }> = {};
     for (const e of entries) {
-      const u = e.user as { _id: { toString(): string }; name: string; email: string };
+      const u = e.user as unknown as { _id: { toString(): string }; name: string; email: string };
       const uid = u._id.toString();
       if (!summary[uid]) summary[uid] = { name: u.name, email: u.email, totalSeconds: 0 };
       if (e.duration) summary[uid].totalSeconds += e.duration;
