@@ -55,7 +55,7 @@ export default function Sidebar({ role, name, email }: SidebarProps) {
   }[role];
 
   return (
-    <aside className="w-64 min-h-screen flex flex-col bg-slate-900 text-white">
+    <aside className="w-64 h-full flex-shrink-0 flex flex-col bg-slate-900 text-white">
       {/* Header */}
       <div className={`p-5 ${roleColors[role]}`}>
         <h1 className="text-xl font-bold tracking-tight">TimeTracker</h1>

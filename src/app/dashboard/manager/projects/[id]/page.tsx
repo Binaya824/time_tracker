@@ -14,6 +14,8 @@ interface Task {
   description: string;
   status: "todo" | "in_progress" | "review" | "completed" | "on_hold";
   priority: "low" | "medium" | "high";
+  type: "Feature" | "Bug" | "Research" | "Improvement" | "Deployment" | "Testing" | "Others";
+  allowEmployeeStatusUpdate: boolean;
   assignedTo: User[];
   dueDate?: string;
   createdAt: string;
@@ -84,6 +86,8 @@ export default function ManagerProjectDetailPage() {
     assignedTo: [] as string[],
     dueDate: "",
     status: "todo",
+    type: "Others",
+    allowEmployeeStatusUpdate: true,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -122,7 +126,7 @@ export default function ManagerProjectDetailPage() {
 
   const openCreate = () => {
     setEditTask(null);
-    setForm({ title: "", description: "", priority: "medium", assignedTo: [], dueDate: "", status: "todo" });
+    setForm({ title: "", description: "", priority: "medium", assignedTo: [], dueDate: "", status: "todo", type: "Others", allowEmployeeStatusUpdate: true });
     setError("");
     setShowModal(true);
   };
@@ -136,6 +140,8 @@ export default function ManagerProjectDetailPage() {
       assignedTo: t.assignedTo.map((u) => u._id),
       dueDate: t.dueDate ? t.dueDate.slice(0, 10) : "",
       status: t.status,
+      type: t.type || "Others",
+      allowEmployeeStatusUpdate: t.allowEmployeeStatusUpdate ?? true,
     });
     setError("");
     setShowModal(true);
@@ -158,7 +164,7 @@ export default function ManagerProjectDetailPage() {
       const url = editTask ? `/api/tasks/${editTask._id}` : "/api/tasks";
       const method = editTask ? "PUT" : "POST";
       const body = editTask
-        ? { title: form.title, description: form.description, priority: form.priority, assignedTo: form.assignedTo, dueDate: form.dueDate || undefined, status: form.status }
+        ? { title: form.title, description: form.description, priority: form.priority, type: form.type, allowEmployeeStatusUpdate: form.allowEmployeeStatusUpdate, assignedTo: form.assignedTo, dueDate: form.dueDate || undefined, status: form.status }
         : { ...form, projectId, dueDate: form.dueDate || undefined };
 
       const res = await fetch(url, {
@@ -256,6 +262,7 @@ export default function ManagerProjectDetailPage() {
                           </div>
                           <div className="flex items-center gap-2 ml-4">
                             <Badge variant={t.priority} />
+                            {t.type && <Badge variant={t.type as any} />}
                             <button onClick={() => openEdit(t)} className="text-xs text-blue-600 hover:underline">Edit</button>
                             <button onClick={() => handleDelete(t._id)} className="text-xs text-red-600 hover:underline">Delete</button>
                           </div>
@@ -437,6 +444,22 @@ export default function ManagerProjectDetailPage() {
               </div>
             </div>
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+              <select
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="Feature">Feature</option>
+                <option value="Bug">Bug</option>
+                <option value="Research">Research</option>
+                <option value="Improvement">Improvement</option>
+                <option value="Deployment">Deployment</option>
+                <option value="Testing">Testing</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
               <input
                 type="date"
@@ -466,7 +489,19 @@ export default function ManagerProjectDetailPage() {
                 </div>
               )}
             </div>
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="pt-2 border-t border-slate-100">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.allowEmployeeStatusUpdate}
+                  onChange={(e) => setForm({ ...form, allowEmployeeStatusUpdate: e.target.checked })}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                />
+                <span className="text-sm font-medium text-slate-700">Allow employees to update task status</span>
+              </label>
+              <p className="text-xs text-slate-500 ml-6 mt-1">If unchecked, employees cannot change the status from their dashboard.</p>
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
               <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50">
                 Cancel
               </button>

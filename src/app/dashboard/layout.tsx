@@ -11,7 +11,7 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar role={user.role} name={user.name} email={user.email} />
       <main className="flex-1 overflow-auto bg-slate-50">{children}</main>
     </div>

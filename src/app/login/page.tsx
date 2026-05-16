@@ -95,11 +95,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-xs font-medium text-slate-500 mb-2">Default Super Admin credentials:</p>
-            <p className="text-xs text-slate-700 font-mono">admin@timetracker.com</p>
-            <p className="text-xs text-slate-700 font-mono">Admin@123</p>
-          </div>
         </div>
       </div>
     </div>

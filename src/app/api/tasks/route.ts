@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-    const { title, description, projectId, assignedTo, priority, dueDate } =
+    const { title, description, projectId, assignedTo, priority, type, dueDate, allowEmployeeStatusUpdate } =
       await req.json();
 
     if (!title || !projectId) {
@@ -74,6 +74,8 @@ export async function POST(req: NextRequest) {
       project: projectId,
       assignedTo: assignedTo ?? [],
       priority: priority ?? "medium",
+      type: type ?? "Others",
+      allowEmployeeStatusUpdate: allowEmployeeStatusUpdate ?? true,
       dueDate: dueDate ?? undefined,
       createdBy: authUser.userId,
     });

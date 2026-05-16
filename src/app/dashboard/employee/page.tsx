@@ -13,6 +13,8 @@ interface Task {
   description: string;
   status: "todo" | "in_progress" | "review" | "completed" | "on_hold";
   priority: "low" | "medium" | "high";
+  type: string;
+  allowEmployeeStatusUpdate?: boolean;
   dueDate?: string;
   project: { _id: string; name: string };
   assignedTo: { _id: string; name: string }[];
@@ -82,7 +84,10 @@ export default function EmployeeDashboard() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-slate-900 flex-1 truncate">{t.title}</h3>
-                  <Badge variant={t.priority} />
+                  <div className="flex gap-2">
+                    <Badge variant={t.priority} />
+                    {t.type && <Badge variant={t.type as any} />}
+                  </div>
                 </div>
                 <p className="text-xs text-blue-600 font-medium mb-2">{t.project.name}</p>
                 {t.description && (
@@ -147,6 +152,7 @@ export default function EmployeeDashboard() {
                   </div>
                   <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                     <Badge variant={t.priority} />
+                    {t.type && <Badge variant={t.type as any} />}
                     <Badge variant={t.status} />
                   </div>
                 </div>
@@ -159,17 +165,23 @@ export default function EmployeeDashboard() {
                       </span>
                     )}
                     {t.status !== "completed" && (
-                      <select
-                        value={t.status}
-                        onChange={(e) => updateStatus(t._id, e.target.value)}
-                        disabled={updatingStatus === t._id}
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <option value="todo">Todo</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="review">In Review</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={t.status}
+                          onChange={(e) => updateStatus(t._id, e.target.value)}
+                          disabled={updatingStatus === t._id || t.allowEmployeeStatusUpdate === false}
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                          onClick={(e) => e.stopPropagation()}
+                          title={t.allowEmployeeStatusUpdate === false ? "Status updates disabled by manager" : ""}
+                        >
+                          <option value="todo">Todo</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="review">In Review</option>
+                        </select>
+                        {t.allowEmployeeStatusUpdate === false && (
+                          <span className="text-[10px] text-slate-400 font-medium">Locked</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   <button
@@ -198,6 +210,7 @@ export default function EmployeeDashboard() {
           {/* Meta row */}
           <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-100 bg-slate-50">
             <Badge variant={selectedTask.priority} />
+            {selectedTask.type && <Badge variant={selectedTask.type as any} />}
             <Badge variant={selectedTask.status} />
             <span className="text-xs text-slate-400 ml-auto">{selectedTask.project.name}</span>
           </div>

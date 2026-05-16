@@ -1,4 +1,4 @@
-type BadgeVariant = "todo" | "in_progress" | "review" | "completed" | "on_hold" | "active" | "low" | "medium" | "high" | "admin" | "manager" | "employee";
+type BadgeVariant = "todo" | "in_progress" | "review" | "completed" | "on_hold" | "active" | "low" | "medium" | "high" | "admin" | "manager" | "employee" | "Feature" | "Bug" | "Research" | "Improvement" | "Deployment" | "Testing" | "Others";
 
 const styles: Record<BadgeVariant, string> = {
   todo: "bg-slate-100 text-slate-600",
@@ -13,21 +13,35 @@ const styles: Record<BadgeVariant, string> = {
   admin: "bg-indigo-100 text-indigo-700",
   manager: "bg-emerald-100 text-emerald-700",
   employee: "bg-violet-100 text-violet-700",
+  Feature: "bg-purple-100 text-purple-700",
+  Bug: "bg-rose-100 text-rose-700",
+  Research: "bg-cyan-100 text-cyan-700",
+  Improvement: "bg-teal-100 text-teal-700",
+  Deployment: "bg-fuchsia-100 text-fuchsia-700",
+  Testing: "bg-amber-100 text-amber-700",
+  Others: "bg-gray-100 text-gray-700",
 };
 
 const labels: Record<BadgeVariant, string> = {
-  todo: "Todo",
-  in_progress: "In Progress",
-  review: "In Review",
-  completed: "Completed",
-  on_hold: "On Hold",
-  active: "Active",
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  admin: "Admin",
-  manager: "Manager",
-  employee: "Employee",
+  todo: "Status: Todo",
+  in_progress: "Status: In Progress",
+  review: "Status: In Review",
+  completed: "Status: Completed",
+  on_hold: "Status: On Hold",
+  active: "Status: Active",
+  low: "Priority: Low",
+  medium: "Priority: Medium",
+  high: "Priority: High",
+  admin: "Role: Admin",
+  manager: "Role: Manager",
+  employee: "Role: Employee",
+  Feature: "Type: Feature",
+  Bug: "Type: Bug",
+  Research: "Type: Research",
+  Improvement: "Type: Improvement",
+  Deployment: "Type: Deployment",
+  Testing: "Type: Testing",
+  Others: "Type: Others",
 };
 
 export default function Badge({ variant }: { variant: BadgeVariant }) {

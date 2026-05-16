@@ -38,6 +38,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Employees can only update status
     if (authUser.role === "employee") {
+      if (task.allowEmployeeStatusUpdate === false) {
+        return NextResponse.json({ error: "You do not have permission to update the status of this task" }, { status: 403 });
+      }
       const allowedStatuses = ["in_progress", "review"];
       if (body.status && !allowedStatuses.includes(body.status)) {
         return NextResponse.json({ error: "Employees can only set status to in_progress or review" }, { status: 403 });

@@ -6,13 +6,15 @@ export async function seedDefaultAdmin() {
     await connectDB();
     const exists = await User.findOne({ role: "admin" });
     if (!exists) {
+      const email = process.env.ADMIN_EMAIL || "admin@timetracker.com";
+      const password = process.env.ADMIN_PASSWORD || "Admin@123";
       await User.create({
         name: "Super Admin",
-        email: "admin@timetracker.com",
-        password: "Admin@123",
+        email,
+        password,
         role: "admin",
       });
-      console.log("Default admin created: admin@timetracker.com / Admin@123");
+      console.log(`Default admin created: ${email}`);
     }
   } catch (err) {
     console.error("Seed error:", err);
