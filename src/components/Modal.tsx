@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 interface ModalProps {
   title: string;
@@ -10,8 +10,6 @@ interface ModalProps {
 }
 
 export default function Modal({ title, onClose, children, size = "md" }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -20,13 +18,13 @@ export default function Modal({ title, onClose, children, size = "md" }: ModalPr
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  // Intentionally no outside-click handler — modal only closes via the ✕ button or Escape key.
+
   const maxW = size === "xl" ? "max-w-4xl" : "max-w-2xl";
 
   return (
     <div
-      ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
       <div className={`bg-white rounded-2xl shadow-xl w-full ${maxW} max-h-[90vh] flex flex-col`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">

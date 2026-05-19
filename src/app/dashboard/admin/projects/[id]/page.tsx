@@ -127,6 +127,18 @@ export default async function AdminProjectDetailPage({
                     <p className="text-xs text-slate-400 mb-1">Total time logged</p>
                     <p className="text-slate-700 font-medium">{formatSeconds(totalSeconds)}</p>
                   </div>
+                  {t.dueDate && (
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">Due Date</p>
+                      <p className="text-slate-700">{new Date(t.dueDate).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  {!!t.dueHour && (
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">Est. Hours</p>
+                      <p className="text-slate-700">{t.dueHour} hr</p>
+                    </div>
+                  )}
                 </div>
 
                 {Object.keys(taskTime).length > 0 && (

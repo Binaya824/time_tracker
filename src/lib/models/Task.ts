@@ -6,6 +6,7 @@ export type TaskType = "Feature" | "Bug" | "Research" | "Improvement" | "Deploym
 
 export interface ITask extends Document {
   _id: mongoose.Types.ObjectId;
+  taskNo: number;
   title: string;
   description: string;
   project: mongoose.Types.ObjectId;
@@ -16,12 +17,14 @@ export interface ITask extends Document {
   createdBy: mongoose.Types.ObjectId;
   allowEmployeeStatusUpdate: boolean;
   dueDate?: Date;
+  dueHour?: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const TaskSchema = new Schema<ITask>(
   {
+    taskNo: { type: Number, unique: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     project: { type: Schema.Types.ObjectId, ref: "Project", required: true },
@@ -44,6 +47,7 @@ const TaskSchema = new Schema<ITask>(
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     allowEmployeeStatusUpdate: { type: Boolean, default: true },
     dueDate: { type: Date },
+    dueHour: { type: Number },
   },
   { timestamps: true }
 );

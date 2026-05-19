@@ -4,7 +4,7 @@ import Task from "@/lib/models/Task";
 import Project from "@/lib/models/Project";
 import { getAuthUser } from "@/lib/auth";
 
-// GET /api/tasks?projectId=xxx
+// GET /api/tasks?projectId=xxx&search=xxx&status=xxx&priority=xxx&type=xxx&page=1&limit=10
 export async function GET(req: NextRequest) {
   try {
     const authUser = await getAuthUser();
@@ -13,21 +13,52 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("projectId");
+    const search = searchParams.get("search")?.trim() ?? "";
+    const status = searchParams.get("status") ?? "";
+    const priority = searchParams.get("priority") ?? "";
+    const type = searchParams.get("type") ?? "";
 
     const filter: Record<string, unknown> = {};
     if (projectId) filter.project = projectId;
+    if (authUser.role === "employee") filter.assignedTo = authUser.userId;
+    if (status) filter.status = status;
+    if (priority) filter.priority = priority;
+    if (type) filter.type = type;
 
-    if (authUser.role === "employee") {
-      filter.assignedTo = authUser.userId;
+    if (search) {
+      const taskNoSearch = Number(search.replace(/^#/, ""));
+      if (!isNaN(taskNoSearch) && taskNoSearch > 0) {
+        filter.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { taskNo: taskNoSearch },
+        ];
+      } else {
+        filter.title = { $regex: search, $options: "i" };
+      }
     }
 
-    const tasks = await Task.find(filter)
+    const pageParam = searchParams.get("page");
+    const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "10"));
+    const page = pageParam ? Math.max(1, parseInt(pageParam)) : null;
+
+    const baseQuery = Task.find(filter)
       .populate("project", "name")
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ taskNo: -1 });
 
-    return NextResponse.json({ tasks });
+    let tasks, total: number | undefined, totalPages: number | undefined;
+    if (page !== null) {
+      [tasks, total] = await Promise.all([
+        baseQuery.clone().skip((page - 1) * limit).limit(limit),
+        Task.countDocuments(filter),
+      ]);
+      totalPages = Math.ceil(total / limit);
+    } else {
+      tasks = await baseQuery;
+    }
+
+    return NextResponse.json({ tasks, ...(page !== null ? { total, page, totalPages } : {}) });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
@@ -42,7 +73,7 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-    const { title, description, projectId, assignedTo, priority, type, dueDate, allowEmployeeStatusUpdate } =
+    const { title, description, projectId, assignedTo, priority, type, dueDate, dueHour, allowEmployeeStatusUpdate } =
       await req.json();
 
     if (!title || !projectId) {
@@ -68,7 +99,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const lastTask = await Task.findOne({}, { taskNo: 1 }).sort({ taskNo: -1 });
+    const nextTaskNo = (lastTask?.taskNo ?? 0) + 1;
+
+    console.log("[tasks POST] dueHour received:", dueHour, typeof dueHour);
     const task = await Task.create({
+      taskNo: nextTaskNo,
       title,
       description: description ?? "",
       project: projectId,
@@ -77,6 +113,7 @@ export async function POST(req: NextRequest) {
       type: type ?? "Others",
       allowEmployeeStatusUpdate: allowEmployeeStatusUpdate ?? true,
       dueDate: dueDate ?? undefined,
+      dueHour: dueHour ?? undefined,
       createdBy: authUser.userId,
     });
 

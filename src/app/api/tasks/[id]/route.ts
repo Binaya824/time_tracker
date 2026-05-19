@@ -32,6 +32,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     await connectDB();
     const { id } = await params;
     const body = await req.json();
+    console.log("[tasks PUT] dueHour received:", body.dueHour, typeof body.dueHour);
 
     const task = await Task.findById(id);
     if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -40,6 +41,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (authUser.role === "employee") {
       if (task.allowEmployeeStatusUpdate === false) {
         return NextResponse.json({ error: "You do not have permission to update the status of this task" }, { status: 403 });
+      }
+      if (task.status === "review") {
+        return NextResponse.json({ error: "Task is in review. Only a manager can update the status." }, { status: 403 });
       }
       const allowedStatuses = ["in_progress", "review"];
       if (body.status && !allowedStatuses.includes(body.status)) {

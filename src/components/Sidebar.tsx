@@ -25,6 +25,8 @@ const adminLinks = [
 const managerLinks = [
   { href: "/dashboard/manager", label: "Overview", icon: "📊" },
   { href: "/dashboard/manager/projects", label: "My Projects", icon: "📁" },
+  { href: "/dashboard/manager/performance", label: "Performance", icon: "📈" },
+  { href: "/dashboard/manager/timelogs", label: "Daily Logs", icon: "🕐" },
 ];
 
 const employeeLinks = [
@@ -34,6 +36,7 @@ const employeeLinks = [
 export default function Sidebar({ role, name, email }: SidebarProps) {
   const pathname = usePathname();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const links =
     role === "admin"
@@ -106,7 +109,7 @@ export default function Sidebar({ role, name, email }: SidebarProps) {
       {/* Logout */}
       <div className="p-3 border-t border-slate-700">
         <button
-          onClick={handleLogout}
+          onClick={() => setShowConfirm(true)}
           disabled={loggingOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50"
         >
@@ -114,6 +117,31 @@ export default function Sidebar({ role, name, email }: SidebarProps) {
           {loggingOut ? "Logging out..." : "Logout"}
         </button>
       </div>
+
+      {/* Logout confirmation modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-80 mx-4">
+            <h2 className="text-base font-semibold text-slate-900 mb-1">Confirm Logout</h2>
+            <p className="text-sm text-slate-500 mb-5">Are you sure you want to log out?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {loggingOut ? "Logging out..." : "Yes, Logout"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
