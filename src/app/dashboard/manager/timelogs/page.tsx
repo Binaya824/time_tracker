@@ -80,7 +80,7 @@ export default async function DailyLogsPage({
   for (const p of allProjects) {
     for (const emp of (p.employees as unknown as PopUser[])) empSet.set(emp._id.toString(), emp);
   }
-  const employeeIds = [...empSet.keys()];
+  const employeeIds = Array.from(empSet.keys());
 
   // Daily logs
   const dlFilter: Record<string, unknown> = { user: { $in: employeeIds }, date: { $gte: sinceDate } };
