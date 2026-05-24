@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Badge from "@/components/Badge";
 import Modal from "@/components/Modal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface User {
   _id: string;
@@ -20,6 +21,7 @@ export default function UsersPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "employee" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -73,9 +75,10 @@ export default function UsersPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this user?")) return;
-    await fetch(`/api/users/${id}`, { method: "DELETE" });
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    await fetch(`/api/users/${deleteId}`, { method: "DELETE" });
+    setDeleteId(null);
     fetchUsers();
   };
 
@@ -137,7 +140,7 @@ export default function UsersPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(u._id)}
+                        onClick={() => setDeleteId(u._id)}
                         className="text-xs text-red-600 hover:underline"
                       >
                         Delete
@@ -226,6 +229,15 @@ export default function UsersPage() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {deleteId && (
+        <ConfirmDialog
+          title="Delete User"
+          message="This will permanently delete the user account. This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteId(null)}
+        />
       )}
     </div>
   );

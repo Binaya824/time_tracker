@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Badge from "@/components/Badge";
 import Modal from "@/components/Modal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Link from "next/link";
 
 interface User { _id: string; name: string; email: string; role: string; }
@@ -31,6 +32,7 @@ export default function AdminProjectsPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -94,9 +96,10 @@ export default function AdminProjectsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this project? All tasks will also be removed.")) return;
-    await fetch(`/api/projects/${id}`, { method: "DELETE" });
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    await fetch(`/api/projects/${deleteId}`, { method: "DELETE" });
+    setDeleteId(null);
     fetchData();
   };
 
@@ -127,60 +130,88 @@ export default function AdminProjectsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {projects.map((p) => (
-            <div key={p._id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 truncate">{p.name}</h3>
-                  {p.description && (
-                    <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{p.description}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+          {projects.map((p) => {
+            const statusAccent =
+              p.status === "active"
+                ? "border-l-emerald-500"
+                : p.status === "completed"
+                ? "border-l-blue-500"
+                : "border-l-amber-400";
+
+            return (
+              <div
+                key={p._id}
+                className={`bg-white rounded-xl border border-slate-200 border-l-4 ${statusAccent} flex flex-col hover:shadow-md transition-shadow`}
+              >
+                {/* Card body */}
+                <div className="p-5 flex-1">
+                  {/* Title + badge */}
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="font-semibold text-slate-900 leading-snug truncate">{p.name}</h3>
+                    <Badge variant={p.status} />
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-slate-500 line-clamp-2 min-h-[2.5rem] mb-4">
+                    {p.description || <span className="italic text-slate-300">No description</span>}
+                  </p>
+
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <span className="text-base">👔</span>
+                      <span>{p.managers.length} manager{p.managers.length !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="w-px h-3 bg-slate-200" />
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <span className="text-base">👥</span>
+                      <span>{p.employees.length} employee{p.employees.length !== 1 ? "s" : ""}</span>
+                    </div>
+                  </div>
+
+                  {/* Manager avatars */}
+                  {p.managers.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {p.managers.map((m) => (
+                        <span
+                          key={m._id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium"
+                        >
+                          <span className="w-4 h-4 rounded-full bg-indigo-200 text-indigo-800 flex items-center justify-center text-[10px] font-bold">
+                            {m.name.charAt(0).toUpperCase()}
+                          </span>
+                          {m.name}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
-                <Badge variant={p.status} />
-              </div>
 
-              <div className="space-y-2 mb-4">
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Managers</p>
-                  <p className="text-sm text-slate-700">
-                    {p.managers.length > 0
-                      ? p.managers.map((m) => m.name).join(", ")
-                      : "None assigned"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Employees</p>
-                  <p className="text-sm text-slate-700">
-                    {p.employees.length > 0
-                      ? `${p.employees.length} employee${p.employees.length !== 1 ? "s" : ""}`
-                      : "None assigned"}
-                  </p>
+                {/* Footer actions */}
+                <div className="flex items-center gap-0 border-t border-slate-100 divide-x divide-slate-100">
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors rounded-bl-xl"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <Link
+                    href={`/dashboard/admin/projects/${p._id}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  >
+                    📋 Tasks
+                  </Link>
+                  <button
+                    onClick={() => setDeleteId(p._id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors rounded-br-xl"
+                  >
+                    🗑 Delete
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                <button
-                  onClick={() => openEdit(p)}
-                  className="flex-1 text-sm text-center py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-600"
-                >
-                  Edit
-                </button>
-                <Link
-                  href={`/dashboard/admin/projects/${p._id}`}
-                  className="flex-1 text-sm text-center py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-blue-600"
-                >
-                  View Tasks
-                </Link>
-                <button
-                  onClick={() => handleDelete(p._id)}
-                  className="flex-1 text-sm text-center py-1.5 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -280,6 +311,15 @@ export default function AdminProjectsPage() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {deleteId && (
+        <ConfirmDialog
+          title="Delete Project"
+          message="This will permanently delete the project and all its tasks. This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteId(null)}
+        />
       )}
     </div>
   );

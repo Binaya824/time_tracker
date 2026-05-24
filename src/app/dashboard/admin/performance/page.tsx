@@ -6,22 +6,21 @@ import Task from "@/lib/models/Task";
 import TimeEntry from "@/lib/models/TimeEntry";
 import PerformanceView, {
   calcTaskScore,
-  buildUrl,
   type Employee,
   type ProjSummary,
   type ProjectDetail,
 } from "@/components/PerformanceView";
 
-const BASE_PATH = "/dashboard/manager/performance";
+const BASE_PATH = "/dashboard/admin/performance";
 const PAGE_SIZE = 8;
 
-export default async function ManagerPerformancePage({
+export default async function AdminPerformancePage({
   searchParams,
 }: {
   searchParams: Promise<{ project?: string; page?: string; search?: string; pid?: string }>;
 }) {
   const authUser = await getAuthUser();
-  if (!authUser || authUser.role !== "manager") redirect("/login");
+  if (!authUser || authUser.role !== "admin") redirect("/login");
 
   await connectDB();
 
@@ -29,13 +28,13 @@ export default async function ManagerPerformancePage({
   const page = Math.max(1, parseInt(pageParam ?? "1"));
   const searchQ = (searchRaw ?? "").toLowerCase().trim();
 
-  const projects = await Project.find({ managers: authUser.userId });
+  // Admin sees ALL projects (no manager filter)
+  const projects = await Project.find();
   const projectIds = projects.map((p) => p._id);
   const tasks = await Task.find({ project: { $in: projectIds } }).populate("assignedTo", "name email");
   const taskIds = tasks.map((t) => t._id);
   const timeEntries = await TimeEntry.find({ task: { $in: taskIds } });
 
-  // empId → taskId → totalSeconds
   const empTaskTime: Record<string, Record<string, number>> = {};
   for (const e of timeEntries) {
     const uid = e.user.toString();
@@ -74,7 +73,7 @@ export default async function ManagerPerformancePage({
       employees: Object.values(empMap),
     };
 
-    return <PerformanceView mode="detail" basePath={BASE_PATH} accentColor="emerald" project={project} />;
+    return <PerformanceView mode="detail" basePath={BASE_PATH} accentColor="indigo" project={project} />;
   }
 
   // ─── Project list view ────────────────────────────────────────────────────
@@ -132,7 +131,7 @@ export default async function ManagerPerformancePage({
     <PerformanceView
       mode="list"
       basePath={BASE_PATH}
-      accentColor="emerald"
+      accentColor="indigo"
       summaries={paged}
       total={total}
       currentPage={currentPage}

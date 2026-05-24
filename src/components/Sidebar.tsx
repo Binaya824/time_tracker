@@ -20,6 +20,8 @@ const adminLinks = [
   { href: "/dashboard/admin", label: "Overview", icon: "📊" },
   { href: "/dashboard/admin/projects", label: "Projects", icon: "📁" },
   { href: "/dashboard/admin/users", label: "Users", icon: "👥" },
+  { href: "/dashboard/admin/performance", label: "Performance", icon: "📈" },
+  { href: "/dashboard/admin/timelogs", label: "Daily Logs", icon: "🕐" },
 ];
 
 const managerLinks = [

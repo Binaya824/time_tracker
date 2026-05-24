@@ -5,12 +5,13 @@ import Project from "@/lib/models/Project";
 import Task from "@/lib/models/Task";
 import TimeEntry from "@/lib/models/TimeEntry";
 import DailyLog from "@/lib/models/DailyLog";
+import User from "@/lib/models/User";
 import DailyLogsView, { type DayLog } from "@/components/DailyLogsView";
 
-const BASE_PATH = "/dashboard/manager/timelogs";
+const BASE_PATH = "/dashboard/admin/timelogs";
 const PAGE_SIZE = 5;
 
-export default async function DailyLogsPage({
+export default async function AdminDailyLogsPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -23,7 +24,7 @@ export default async function DailyLogsPage({
   }>;
 }) {
   const authUser = await getAuthUser();
-  if (!authUser || authUser.role !== "manager") redirect("/login");
+  if (!authUser || authUser.role !== "admin") redirect("/login");
 
   await connectDB();
 
@@ -31,7 +32,8 @@ export default async function DailyLogsPage({
     await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1"));
 
-  const projects = await Project.find({ managers: authUser.userId });
+  // Admin sees ALL projects
+  const projects = await Project.find();
   const selectedProject = projectId ? projects.find((p) => p._id.toString() === projectId) : null;
   const filteredProjects = selectedProject ? [selectedProject] : projects;
   const projectIds = filteredProjects.map((p) => p._id);
@@ -51,12 +53,11 @@ export default async function DailyLogsPage({
   if (untilDateTime) (teFilter.startTime as Record<string, Date>).$lte = untilDateTime;
   const entries = await TimeEntry.find(teFilter).populate("user", "name email").sort({ startTime: 1 });
 
-  const allProjects = await Project.find({ managers: authUser.userId }).populate("employees", "name email");
+  // Admin sees ALL employees
   type PopUser = { _id: { toString(): string }; name: string; email: string };
+  const allEmployees = await User.find({ role: "employee" }, "name email");
   const empSet = new Map<string, PopUser>();
-  for (const p of allProjects) {
-    for (const emp of p.employees as unknown as PopUser[]) empSet.set(emp._id.toString(), emp);
-  }
+  for (const emp of allEmployees as unknown as PopUser[]) empSet.set(emp._id.toString(), emp);
   const employeeIds = Array.from(empSet.keys());
 
   const dlFilter: Record<string, unknown> = { user: { $in: employeeIds }, date: { $gte: sinceDate } };
@@ -153,7 +154,7 @@ export default async function DailyLogsPage({
   return (
     <DailyLogsView
       basePath={BASE_PATH}
-      accentColor="emerald"
+      accentColor="indigo"
       projects={projects.map((p) => ({ id: p._id.toString(), name: p.name }))}
       pagedLogs={pagedLogs}
       totalDates={totalDates}

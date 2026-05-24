@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Badge from "@/components/Badge";
 import Modal from "@/components/Modal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Link from "next/link";
 
 const TASKS_PER_PAGE = 10;
@@ -62,6 +63,7 @@ export default function ManagerProjectDetailPage() {
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
 
   // Task detail modal
   const [detailTask, setDetailTask] = useState<Task | null>(null);
@@ -162,10 +164,10 @@ export default function ManagerProjectDetailPage() {
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Delete this task?")) return;
-    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  const handleDelete = async () => {
+    if (!deleteTaskId) return;
+    await fetch(`/api/tasks/${deleteTaskId}`, { method: "DELETE" });
+    setDeleteTaskId(null);
     const newTotal = totalTasks - 1;
     const newTotalPages = Math.ceil(newTotal / TASKS_PER_PAGE);
     const newPage = taskPage > newTotalPages && newTotalPages > 0 ? newTotalPages : taskPage;
@@ -273,7 +275,7 @@ export default function ManagerProjectDetailPage() {
                         Edit
                       </button>
                       <button
-                        onClick={(e) => handleDelete(t._id, e)}
+                        onClick={(e) => { e.stopPropagation(); setDeleteTaskId(t._id); }}
                         className="text-xs text-red-500 hover:underline"
                       >
                         Delete
@@ -521,6 +523,15 @@ export default function ManagerProjectDetailPage() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {deleteTaskId && (
+        <ConfirmDialog
+          title="Delete Task"
+          message="This will permanently delete the task and all its time entries. This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTaskId(null)}
+        />
       )}
     </div>
   );

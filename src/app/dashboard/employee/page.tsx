@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Badge from "@/components/Badge";
 import DailyTimer from "@/components/DailyTimer";
-import Timer from "@/components/Timer";
+import InlineTimer from "@/components/InlineTimer";
 import TimeLog from "@/components/TimeLog";
 import Modal from "@/components/Modal";
 import TaskComments from "@/components/TaskComments";
@@ -26,9 +26,14 @@ interface Task {
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal state — only for Log & Comments (timer is now inline)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [activeTab, setActiveTab] = useState<"timer" | "log" | "comments">("timer");
-  const [logRefreshTick, setLogRefreshTick] = useState(0);
+  const [activeTab, setActiveTab] = useState<"log" | "comments">("log");
+
+  // Global timer sync — when any InlineTimer fires an action, all others re-fetch
+  const [timerRefreshTick, setTimerRefreshTick] = useState(0);
+  const handleTimerAction = useCallback(() => setTimerRefreshTick((n) => n + 1), []);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -45,7 +50,6 @@ export default function EmployeeDashboard() {
 
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  // Debounce search — 400ms
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -72,16 +76,14 @@ export default function EmployeeDashboard() {
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  // Reset to page 1 when filters change
   const handleFilterChange = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLSelectElement>) => {
     setter(e.target.value);
     setPage(1);
   };
 
-  const openTask = (task: Task) => {
+  const openLogModal = (task: Task, tab: "log" | "comments" = "log") => {
     setSelectedTask(task);
-    setActiveTab("timer");
-    setLogRefreshTick(0);
+    setActiveTab(tab);
   };
 
   const updateStatus = async (taskId: string, status: string) => {
@@ -95,9 +97,6 @@ export default function EmployeeDashboard() {
     setUpdatingStatus(null);
   };
 
-  const inProgressTasks = tasks.filter((t) => t.status === "in_progress");
-  const filteredTasks = tasks;
-
   return (
     <div className="p-8">
       <div className="mb-6">
@@ -106,42 +105,6 @@ export default function EmployeeDashboard() {
       </div>
 
       <DailyTimer />
-
-      {/* In Progress section */}
-      {inProgressTasks.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            Currently In Progress
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {inProgressTasks.map((t) => (
-              <div
-                key={t._id}
-                className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 cursor-pointer hover:border-blue-400 transition-colors"
-                onClick={() => openTask(t)}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-slate-900 flex-1 truncate">{t.title}</h3>
-                  <div className="flex gap-2">
-                    <Badge variant={t.priority} />
-                    {t.type && <Badge variant={t.type as any} />}
-                  </div>
-                </div>
-                <p className="text-xs text-blue-600 font-medium mb-2">{t.project.name}</p>
-                {t.description && (
-                  <p className="text-sm text-slate-600 line-clamp-2 mb-3">{t.description}</p>
-                )}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-medium">
-                    ● In Progress
-                  </span>
-                  <span className="text-xs text-slate-500">Click to view timer</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* All Tasks */}
       <div>
@@ -202,7 +165,7 @@ export default function EmployeeDashboard() {
 
         {loading ? (
           <div className="text-center py-12 text-slate-400">Loading tasks...</div>
-        ) : filteredTasks.length === 0 ? (
+        ) : tasks.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
             <p className="text-4xl mb-3">📋</p>
             <p className="text-slate-600 font-medium">No tasks assigned</p>
@@ -213,8 +176,13 @@ export default function EmployeeDashboard() {
             {tasks.map((t) => (
               <div
                 key={t._id}
-                className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-sm transition-shadow"
+                className={`bg-white rounded-xl border-2 p-5 transition-shadow hover:shadow-sm ${
+                  t.status === "in_progress"
+                    ? "border-blue-200"
+                    : "border-slate-200"
+                }`}
               >
+                {/* Header row */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -235,52 +203,68 @@ export default function EmployeeDashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
-                  <div className="flex items-center gap-4">
-                    {t.dueDate && (
-                      <span className="text-xs text-slate-500">
-                        Due: {new Date(t.dueDate).toLocaleDateString()}
+                {/* Meta row */}
+                <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                  {t.dueDate && <span>Due: {new Date(t.dueDate).toLocaleDateString()}</span>}
+                  {!!t.dueHour && <span>Est: {t.dueHour} hr</span>}
+                </div>
+
+                {/* Timer row — always visible, per task */}
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <InlineTimer
+                    taskId={t._id}
+                    refreshTick={timerRefreshTick}
+                    onAction={handleTimerAction}
+                    readOnly={t.status === "review"}
+                  />
+                </div>
+
+                {/* Bottom action row */}
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
+                  {/* Status control */}
+                  <div className="flex items-center gap-2">
+                    {t.status === "completed" ? (
+                      <span className="text-xs text-slate-400 italic">Completed</span>
+                    ) : t.status === "review" ? (
+                      <span className="text-xs px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg font-medium">
+                        In Review — awaiting manager
                       </span>
-                    )}
-                    {!!t.dueHour && (
-                      <span className="text-xs text-slate-500">
-                        Est: {t.dueHour} hr
-                      </span>
-                    )}
-                    {t.status !== "completed" && (
-                      <div className="flex items-center gap-2">
-                        {t.status === "review" ? (
-                          <span className="text-xs px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg font-medium">
-                            In Review — awaiting manager
-                          </span>
-                        ) : (
-                          <>
-                            <select
-                              value={t.status}
-                              onChange={(e) => updateStatus(t._id, e.target.value)}
-                              disabled={updatingStatus === t._id || t.allowEmployeeStatusUpdate === false}
-                              className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
-                              onClick={(e) => e.stopPropagation()}
-                              title={t.allowEmployeeStatusUpdate === false ? "Status updates disabled by manager" : ""}
-                            >
-                              <option value="todo">Todo</option>
-                              <option value="in_progress">In Progress</option>
-                              <option value="review">In Review</option>
-                            </select>
-                            {t.allowEmployeeStatusUpdate === false && (
-                              <span className="text-[10px] text-slate-400 font-medium">Locked</span>
-                            )}
-                          </>
+                    ) : (
+                      <>
+                        <select
+                          value={t.status}
+                          onChange={(e) => updateStatus(t._id, e.target.value)}
+                          disabled={updatingStatus === t._id || t.allowEmployeeStatusUpdate === false}
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                          onClick={(e) => e.stopPropagation()}
+                          title={t.allowEmployeeStatusUpdate === false ? "Status updates disabled by manager" : ""}
+                        >
+                          <option value="todo">Todo</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="review">In Review</option>
+                        </select>
+                        {t.allowEmployeeStatusUpdate === false && (
+                          <span className="text-[10px] text-slate-400 font-medium">Locked</span>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
-                  <button
-                    onClick={() => openTask(t)}
-                    className="text-sm text-violet-600 hover:text-violet-700 font-medium hover:underline"
-                  >
-                    Track Time →
-                  </button>
+
+                  {/* Log & Comments links */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => openLogModal(t, "log")}
+                      className="text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors"
+                    >
+                      📋 Time Log
+                    </button>
+                    <button
+                      onClick={() => openLogModal(t, "comments")}
+                      className="text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors"
+                    >
+                      💬 Comments
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -337,17 +321,13 @@ export default function EmployeeDashboard() {
         )}
       </div>
 
-      {/* Task detail modal */}
+      {/* Modal — Time Log & Comments only (timer is now inline) */}
       {selectedTask && (
         <Modal
           title={selectedTask.title}
           size="xl"
-          onClose={() => {
-            setSelectedTask(null);
-            fetchTasks();
-          }}
+          onClose={() => setSelectedTask(null)}
         >
-          {/* Meta row */}
           <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-100 bg-slate-50">
             <Badge variant={selectedTask.priority} />
             {selectedTask.type && <Badge variant={selectedTask.type as any} />}
@@ -363,17 +343,16 @@ export default function EmployeeDashboard() {
             </div>
           )}
 
-          {/* Tabs */}
           <div className="flex border-b border-slate-200 px-6 pt-4 gap-1">
-            {(["timer", "log", "comments"] as const).map((tab) => {
-              const labels = { timer: "⏱ Timer", log: "📋 Time Log", comments: "💬 Comments" };
+            {(["log", "comments"] as const).map((tab) => {
+              const labels = { log: "📋 Time Log", comments: "💬 Comments" };
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                     activeTab === tab
-                      ? "border-blue-600 text-blue-600 bg-blue-50"
+                      ? "border-violet-600 text-violet-600 bg-violet-50"
                       : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   }`}
                 >
@@ -383,21 +362,12 @@ export default function EmployeeDashboard() {
             })}
           </div>
 
-          {/* Tab panels — use CSS visibility so Timer stays mounted & interval keeps running */}
-          <div>
-            <div className={activeTab === "timer" ? "block" : "hidden"}>
-              <Timer
-                taskId={selectedTask._id}
-                onAction={() => setLogRefreshTick((n) => n + 1)}
-              />
-            </div>
-            <div className={activeTab === "log" ? "block" : "hidden"}>
-              <TimeLog taskId={selectedTask._id} refreshTick={logRefreshTick} />
-            </div>
-            <div className={activeTab === "comments" ? "block" : "hidden"}>
-              <div className="p-6">
-                <TaskComments taskId={selectedTask._id} />
-              </div>
+          <div className={activeTab === "log" ? "block" : "hidden"}>
+            <TimeLog taskId={selectedTask._id} refreshTick={timerRefreshTick} />
+          </div>
+          <div className={activeTab === "comments" ? "block" : "hidden"}>
+            <div className="p-6">
+              <TaskComments taskId={selectedTask._id} />
             </div>
           </div>
         </Modal>

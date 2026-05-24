@@ -9,6 +9,7 @@ interface Props {
   email?: string;
   startDate?: string;
   endDate?: string;
+  basePath?: string;
 }
 
 export default function DailyLogsFilters({
@@ -17,6 +18,7 @@ export default function DailyLogsFilters({
   email: initEmail = "",
   startDate: initStart = "",
   endDate: initEnd = "",
+  basePath = "/dashboard/manager/timelogs",
 }: Props) {
   const router = useRouter();
   const [name, setName] = useState(initName);
@@ -31,14 +33,14 @@ export default function DailyLogsFilters({
     if (email.trim()) params.set("email", email.trim());
     if (startDate) params.set("startDate", startDate);
     if (endDate) params.set("endDate", endDate);
-    router.push(`/dashboard/manager/timelogs?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   const clear = () => {
     setName(""); setEmail(""); setStartDate(""); setEndDate("");
     const params = new URLSearchParams();
     if (projectId) params.set("projectId", projectId);
-    router.push(`/dashboard/manager/timelogs?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   const hasFilters = name || email || startDate || endDate;
