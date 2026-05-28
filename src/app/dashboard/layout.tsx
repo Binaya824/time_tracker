@@ -11,9 +11,11 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-100">
       <Sidebar role={user.role} name={user.name} email={user.email} />
-      <main className="flex-1 overflow-auto bg-slate-50">{children}</main>
+      <main className="flex-1 min-w-0 w-0 overflow-auto scrollbar-thin bg-slate-100">
+        {children}
+      </main>
     </div>
   );
 }

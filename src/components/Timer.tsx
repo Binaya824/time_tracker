@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Play, Pause, Square } from "lucide-react";
 
 interface TimerProps {
   taskId: string;
-  onAction?: () => void; // notify sibling TimeLog to refresh
+  onAction?: () => void;
 }
 
 type TimerStatus = "idle" | "running" | "paused";
@@ -47,7 +48,6 @@ export default function Timer({ taskId, onAction }: TimerProps) {
 
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
-  // Live ticker
   useEffect(() => {
     if (timerStatus !== "running" || !runningStartTime) {
       setElapsedSeconds(0);
@@ -75,7 +75,6 @@ export default function Timer({ taskId, onAction }: TimerProps) {
     }
   };
 
-  // running → total + live session; paused → total frozen; idle → 0
   let display = 0;
   if (timerStatus === "running") display = totalCompletedSeconds + elapsedSeconds;
   else if (timerStatus === "paused") display = totalCompletedSeconds;
@@ -89,56 +88,47 @@ export default function Timer({ taskId, onAction }: TimerProps) {
     );
   }
 
+  const clockColor =
+    timerStatus === "running" ? "text-blue-600"
+    : timerStatus === "paused" ? "text-amber-500"
+    : "text-slate-200";
+
+  const statusPill =
+    timerStatus === "running" ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
+    : timerStatus === "paused" ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+    : "bg-slate-100 text-slate-400";
+
+  const statusLabel =
+    timerStatus === "running" ? "Running"
+    : timerStatus === "paused" ? "Paused"
+    : "Not started";
+
   return (
     <div className="p-6 flex flex-col items-center gap-5">
-      {/* Clock */}
       <div className="text-center">
-        <span
-          className={`text-6xl font-mono font-bold tabular-nums tracking-tight ${
-            timerStatus === "running"
-              ? "text-blue-600"
-              : timerStatus === "paused"
-              ? "text-yellow-500"
-              : "text-slate-300"
-          }`}
-        >
+        <span className={`text-6xl font-mono font-bold tabular-nums tracking-tight ${clockColor}`}>
           {formatSeconds(display)}
         </span>
         <p className="text-xs text-slate-400 mt-2">
-          {timerStatus === "running"
-            ? "Total time logged"
-            : timerStatus === "paused"
-            ? "Paused — total logged so far"
-            : "Timer stopped"}
+          {timerStatus === "running" ? "Total time logged"
+          : timerStatus === "paused" ? "Paused — total logged so far"
+          : "Timer stopped"}
         </p>
       </div>
 
-      {/* Status badge */}
-      <span
-        className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-          timerStatus === "running"
-            ? "bg-blue-100 text-blue-700"
-            : timerStatus === "paused"
-            ? "bg-yellow-100 text-yellow-700"
-            : "bg-slate-100 text-slate-500"
-        }`}
-      >
-        {timerStatus === "running"
-          ? "● Running"
-          : timerStatus === "paused"
-          ? "⏸ Paused"
-          : "○ Not started"}
+      <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${statusPill}`}>
+        {statusLabel}
       </span>
 
-      {/* Controls */}
       <div className="flex gap-3 w-full max-w-sm">
         {timerStatus === "idle" && (
           <button
             onClick={() => doAction("start")}
             disabled={actionLoading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
           >
-            ▶ {totalCompletedSeconds > 0 ? "Restart" : "Start"}
+            <Play className="w-4 h-4" fill="currentColor" />
+            {totalCompletedSeconds > 0 ? "Restart" : "Start"}
           </button>
         )}
         {timerStatus === "running" && (
@@ -146,16 +136,18 @@ export default function Timer({ taskId, onAction }: TimerProps) {
             <button
               onClick={() => doAction("pause")}
               disabled={actionLoading}
-              className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
-              ⏸ Pause
+              <Pause className="w-4 h-4" fill="currentColor" />
+              Pause
             </button>
             <button
               onClick={() => doAction("stop")}
               disabled={actionLoading}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
-              ⏹ Stop
+              <Square className="w-4 h-4" fill="currentColor" />
+              Stop
             </button>
           </>
         )}
@@ -164,16 +156,18 @@ export default function Timer({ taskId, onAction }: TimerProps) {
             <button
               onClick={() => doAction("resume")}
               disabled={actionLoading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
-              ▶ Resume
+              <Play className="w-4 h-4" fill="currentColor" />
+              Resume
             </button>
             <button
               onClick={() => doAction("stop")}
               disabled={actionLoading}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
-              ⏹ Stop
+              <Square className="w-4 h-4" fill="currentColor" />
+              Stop
             </button>
           </>
         )}

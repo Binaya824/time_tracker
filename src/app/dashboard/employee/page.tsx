@@ -7,6 +7,7 @@ import InlineTimer from "@/components/InlineTimer";
 import TimeLog from "@/components/TimeLog";
 import Modal from "@/components/Modal";
 import TaskComments from "@/components/TaskComments";
+import { Search, SlidersHorizontal, MessageSquare, ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Task {
   _id: string;
@@ -22,6 +23,12 @@ interface Task {
   project: { _id: string; name: string };
   assignedTo: { _id: string; name: string }[];
 }
+
+const priorityDot: Record<string, string> = {
+  high: "bg-red-500",
+  medium: "bg-amber-400",
+  low: "bg-slate-300",
+};
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -94,44 +101,46 @@ export default function EmployeeDashboard() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="w-full p-4 sm:p-6 lg:p-8">
 
-      {/* ── Page header — centered on mobile, left-aligned on sm+ ── */}
-      <div className="mb-5 sm:mb-6 text-center sm:text-left">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">My Tasks</h1>
+      {/* Page header */}
+      <div className="mb-5 sm:mb-6">
+        <p className="text-xs font-semibold text-violet-600 uppercase tracking-widest mb-1">Employee</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">My Tasks</h1>
         <p className="text-slate-500 mt-1 text-sm">Track your work and log time</p>
       </div>
 
       <DailyTimer />
 
-      {/* ── Tasks section ── */}
+      {/* Tasks section */}
       <div>
-        <div className="mb-4 space-y-3">
-          {/* Row: count label */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
-              All Tasks ({total})
-            </h2>
+        {/* Search + Filters */}
+        <div className="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-card p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <SlidersHorizontal className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <span className="text-sm font-medium text-slate-600">
+              {total} {total === 1 ? "task" : "tasks"} found
+            </span>
           </div>
-
-          {/* ── Search + Filters ── */}
-          {/* On mobile: search full-width on its own row, selects in a 2-col grid below */}
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            {/* Search — always full row on mobile */}
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search by name or #task no..."
-              className="w-full sm:flex-1 sm:min-w-[200px] px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
+            {/* Search */}
+            <div className="relative flex-1 sm:min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search tasks or #no..."
+                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-slate-50 focus:bg-white transition-colors"
+              />
+            </div>
 
-            {/* Selects — 2-col grid on mobile, inline on sm+ */}
+            {/* Filters */}
             <div className="grid grid-cols-2 gap-2 sm:contents">
               <select
                 value={statusFilter}
                 onChange={handleFilterChange(setStatusFilter)}
-                className="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-slate-50 focus:bg-white transition-colors cursor-pointer"
               >
                 <option value="all">All Status</option>
                 <option value="todo">Todo</option>
@@ -144,7 +153,7 @@ export default function EmployeeDashboard() {
               <select
                 value={priorityFilter}
                 onChange={handleFilterChange(setPriorityFilter)}
-                className="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-slate-50 focus:bg-white transition-colors cursor-pointer"
               >
                 <option value="all">All Priority</option>
                 <option value="low">Low</option>
@@ -155,7 +164,7 @@ export default function EmployeeDashboard() {
               <select
                 value={typeFilter}
                 onChange={handleFilterChange(setTypeFilter)}
-                className="col-span-2 sm:col-span-1 w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="col-span-2 sm:col-span-1 w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-slate-50 focus:bg-white transition-colors cursor-pointer"
               >
                 <option value="all">All Types</option>
                 <option value="Feature">Feature</option>
@@ -170,13 +179,19 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        {/* ── Task list ── */}
+        {/* Task list */}
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Loading tasks...</div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-2xl ring-1 ring-slate-900/5 p-5 animate-pulse h-36" />
+            ))}
+          </div>
         ) : tasks.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-            <p className="text-4xl mb-3">📋</p>
-            <p className="text-slate-600 font-medium">No tasks assigned</p>
+          <div className="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-card p-14 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-4">
+              <ClipboardList className="w-7 h-7 text-violet-400" strokeWidth={1.5} />
+            </div>
+            <p className="text-slate-700 font-semibold">No tasks found</p>
             <p className="text-slate-400 text-sm mt-1">Your manager will assign tasks to you</p>
           </div>
         ) : (
@@ -184,42 +199,46 @@ export default function EmployeeDashboard() {
             {tasks.map((t) => (
               <div
                 key={t._id}
-                className={`bg-white rounded-xl border-2 p-4 sm:p-5 transition-shadow hover:shadow-sm ${
-                  t.status === "in_progress" ? "border-blue-200" : "border-slate-200"
+                className={`bg-white rounded-2xl ring-1 p-4 sm:p-5 transition-all duration-150 hover:shadow-card-hover ${
+                  t.status === "in_progress"
+                    ? "ring-blue-200 shadow-[0_0_0_1px_rgb(147_197_253/1)]"
+                    : "ring-slate-900/5 shadow-card"
                 }`}
               >
-                {/* ── Header row ── */}
+                {/* Header row */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
+                      {/* Priority dot */}
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${priorityDot[t.priority] ?? "bg-slate-300"}`} />
                       {t.taskNo !== undefined && (
                         <span className="text-xs font-mono text-slate-400 flex-shrink-0">#{t.taskNo}</span>
                       )}
-                      <h3 className="font-medium text-slate-900 truncate">{t.title}</h3>
+                      <h3 className="font-semibold text-slate-900 truncate">{t.title}</h3>
                     </div>
-                    <p className="text-xs text-violet-600 font-medium mb-1">{t.project.name}</p>
+                    <p className="text-xs font-medium text-violet-600 mb-1 ml-4">{t.project.name}</p>
                     {t.description && (
-                      <p className="text-sm text-slate-500 line-clamp-2">{t.description}</p>
+                      <p className="text-sm text-slate-500 line-clamp-2 ml-4">{t.description}</p>
                     )}
                   </div>
 
-                  {/* Badges — wrap on mobile */}
-                  <div className="flex flex-wrap items-center justify-end gap-1.5 flex-shrink-0 max-w-[140px] sm:max-w-none">
+                  {/* Badges */}
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 flex-shrink-0 max-w-[160px] sm:max-w-none">
                     <Badge variant={t.priority} />
                     {t.type && <Badge variant={t.type as any} />}
                     <Badge variant={t.status} />
                   </div>
                 </div>
 
-                {/* ── Meta row ── */}
+                {/* Meta */}
                 {(t.dueDate || t.dueHour) && (
-                  <div className="flex items-center gap-4 mt-2.5 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 mt-2.5 text-xs text-slate-400 ml-4">
                     {t.dueDate && <span>Due: {new Date(t.dueDate).toLocaleDateString()}</span>}
-                    {!!t.dueHour && <span>Est: {t.dueHour} hr</span>}
+                    {!!t.dueHour && <span>Est: {t.dueHour}h</span>}
                   </div>
                 )}
 
-                {/* ── Inline timer ── */}
+                {/* Inline timer */}
                 <div className="mt-4 pt-3 border-t border-slate-100">
                   <InlineTimer
                     taskId={t._id}
@@ -229,14 +248,17 @@ export default function EmployeeDashboard() {
                   />
                 </div>
 
-                {/* ── Bottom action row ── */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3 pt-2 border-t border-slate-50">
+                {/* Bottom action row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3 pt-3 border-t border-slate-100">
                   {/* Status control */}
                   <div className="flex items-center gap-2">
                     {t.status === "completed" ? (
-                      <span className="text-xs text-slate-400 italic">Completed</span>
+                      <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                        Completed
+                      </span>
                     ) : t.status === "review" ? (
-                      <span className="text-xs px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg font-medium">
+                      <span className="text-xs px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-semibold">
                         In Review — awaiting manager
                       </span>
                     ) : (
@@ -245,7 +267,7 @@ export default function EmployeeDashboard() {
                           value={t.status}
                           onChange={(e) => updateStatus(t._id, e.target.value)}
                           disabled={updatingStatus === t._id || t.allowEmployeeStatusUpdate === false}
-                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                          className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
                           title={t.allowEmployeeStatusUpdate === false ? "Status updates disabled by manager" : ""}
                         >
@@ -260,19 +282,21 @@ export default function EmployeeDashboard() {
                     )}
                   </div>
 
-                  {/* Log & Comments links */}
-                  <div className="flex items-center gap-3 sm:gap-3">
+                  {/* Actions */}
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => openLogModal(t, "log")}
-                      className="text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors cursor-pointer"
                     >
-                      📋 Time Log
+                      <ClipboardList className="w-3.5 h-3.5" />
+                      Time Log
                     </button>
                     <button
                       onClick={() => openLogModal(t, "comments")}
-                      className="text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors cursor-pointer"
                     >
-                      💬 Comments
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Comments
                     </button>
                   </div>
                 </div>
@@ -281,7 +305,7 @@ export default function EmployeeDashboard() {
           </div>
         )}
 
-        {/* ── Pagination ── */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-200">
             <p className="text-sm text-slate-500 order-2 sm:order-1">
@@ -291,9 +315,9 @@ export default function EmployeeDashboard() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
-                Previous
+                <ChevronLeft className="w-4 h-4" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
@@ -309,10 +333,10 @@ export default function EmployeeDashboard() {
                     <button
                       key={item}
                       onClick={() => setPage(item as number)}
-                      className={`px-3 py-1.5 text-sm border rounded-lg transition-colors ${
+                      className={`w-8 h-8 text-sm border rounded-lg transition-colors cursor-pointer ${
                         page === item
-                          ? "bg-violet-600 text-white border-violet-600"
-                          : "border-slate-300 hover:bg-slate-50"
+                          ? "bg-violet-600 text-white border-violet-600 font-semibold"
+                          : "border-slate-200 hover:bg-slate-50 text-slate-600"
                       }`}
                     >
                       {item}
@@ -322,23 +346,23 @@ export default function EmployeeDashboard() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
-                Next
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Time Log & Comments Modal ── */}
+      {/* Time Log & Comments Modal */}
       {selectedTask && (
         <Modal
           title={selectedTask.title}
           size="xl"
           onClose={() => setSelectedTask(null)}
         >
-          <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 border-b border-slate-100 bg-slate-50">
+          <div className="flex flex-wrap items-center gap-2 px-6 py-3 border-b border-slate-100 bg-slate-50/70">
             <Badge variant={selectedTask.priority} />
             {selectedTask.type && <Badge variant={selectedTask.type as any} />}
             <Badge variant={selectedTask.status} />
@@ -348,28 +372,30 @@ export default function EmployeeDashboard() {
           </div>
 
           {selectedTask.description && (
-            <div className="px-4 sm:px-6 pt-4">
-              <p className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-4 py-3">
+            <div className="px-6 pt-4">
+              <p className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
                 {selectedTask.description}
               </p>
             </div>
           )}
 
           {/* Tabs */}
-          <div className="flex border-b border-slate-200 px-4 sm:px-6 pt-4 gap-1">
+          <div className="flex border-b border-slate-200 px-6 pt-4 gap-1">
             {(["log", "comments"] as const).map((tab) => {
-              const labels = { log: "📋 Time Log", comments: "💬 Comments" };
+              const Icon = tab === "log" ? ClipboardList : MessageSquare;
+              const labelText = tab === "log" ? "Time Log" : "Comments";
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors cursor-pointer ${
                     activeTab === tab
                       ? "border-violet-600 text-violet-600 bg-violet-50"
                       : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  {labels[tab]}
+                  <Icon className="w-3.5 h-3.5" />
+                  {labelText}
                 </button>
               );
             })}
@@ -379,7 +405,7 @@ export default function EmployeeDashboard() {
             <TimeLog taskId={selectedTask._id} refreshTick={timerRefreshTick} />
           </div>
           <div className={activeTab === "comments" ? "block" : "hidden"}>
-            <div className="p-4 sm:p-6">
+            <div className="p-6">
               <TaskComments taskId={selectedTask._id} />
             </div>
           </div>
