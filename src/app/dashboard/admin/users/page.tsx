@@ -55,9 +55,7 @@ export default function UsersPage() {
     try {
       const url = editUser ? `/api/users/${editUser._id}` : "/api/users";
       const method = editUser ? "PUT" : "POST";
-      const body = editUser
-        ? { name: form.name, role: form.role }
-        : form;
+      const body = editUser ? { name: form.name, role: form.role } : form;
 
       const res = await fetch(url, {
         method,
@@ -83,77 +81,125 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Users</h1>
-          <p className="text-slate-500 mt-1">Manage team members</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+        <div className="text-center sm:text-left">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Users</h1>
+          <p className="text-slate-500 mt-0.5 text-sm">Manage team members</p>
         </div>
         <button
           onClick={openCreate}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors"
         >
           + Add User
         </button>
       </div>
 
+      {/* ── Desktop table / Mobile card list ── */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-slate-400">Loading...</div>
         ) : users.length === 0 ? (
           <div className="p-8 text-center text-slate-400">No users found</div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Joined</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+          <>
+            {/* Desktop table — hidden on small screens */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Joined</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {users.map((u) => (
+                    <tr key={u._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                            {u.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm font-medium text-slate-900">{u.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{u.email}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant={u.role} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-500">
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEdit(u)}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(u._id)}
+                            className="text-xs text-red-600 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card list — shown only on small screens */}
+            <div className="sm:hidden divide-y divide-slate-100">
               {users.map((u) => (
-                <tr key={u._id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold">
-                        {u.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="text-sm font-medium text-slate-900">{u.name}</span>
+                <div key={u._id} className="p-4 flex items-start gap-3">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {u.name.charAt(0).toUpperCase()}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{u.name}</p>
+                      <Badge variant={u.role} />
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{u.email}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={u.role} />
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{u.email}</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Joined {new Date(u.createdAt).toLocaleDateString()}
+                    </p>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-3 mt-2">
                       <button
                         onClick={() => openEdit(u)}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs font-medium text-blue-600 hover:underline"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => setDeleteId(u._id)}
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs font-medium text-red-600 hover:underline"
                       >
                         Delete
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
 
+      {/* ── Create / Edit Modal ── */}
       {showModal && (
         <Modal
           title={editUser ? "Edit User" : "Create User"}
@@ -231,6 +277,7 @@ export default function UsersPage() {
         </Modal>
       )}
 
+      {/* ── Delete confirmation ── */}
       {deleteId && (
         <ConfirmDialog
           title="Delete User"

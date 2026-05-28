@@ -106,17 +106,17 @@ export default function AdminProjectsPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
-          <p className="text-slate-500 mt-1">Create and manage projects</p>
-        </div>
-        <button
-          onClick={openCreate}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          + New Project
-        </button>
-      </div>
+  <div className="sm:text-left text-center w-full sm:w-auto">
+    <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+    <p className="text-slate-500 mt-1">Create and manage projects</p>
+  </div>
+  <button
+    onClick={openCreate}
+    className="hidden sm:block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+  >
+    + New Project
+  </button>
+</div>
 
       {loading ? (
         <div className="text-center py-12 text-slate-400">Loading...</div>

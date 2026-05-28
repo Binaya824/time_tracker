@@ -1,3 +1,4 @@
+ 
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -14,17 +15,13 @@ interface DailyLog {
 
 const WORK_DAY_SECS = 8 * 3600;
 
-function pad(n: number) {
-  return String(n).padStart(2, "0");
-}
-
+function pad(n: number) { return String(n).padStart(2, "0"); }
 function formatHMS(secs: number) {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
   const s = secs % 60;
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
-
 function formatTime12(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
 }
@@ -32,11 +29,19 @@ function formatTime12(iso: string) {
 function calcElapsed(log: DailyLog): number {
   const start = new Date(log.startTime).getTime();
   const paused = log.totalPausedSeconds ?? 0;
+
   if (log.status === "paused" && log.pausedAt) {
-    // Frozen at the moment it was paused
-    return Math.floor((new Date(log.pausedAt).getTime() - start) / 1000) - paused;
+    // Frozen: only count up to when pause began
+    return Math.max(0, Math.floor(
+      (new Date(log.pausedAt).getTime() - start) / 1000
+    ) - paused);
   }
-  return Math.floor((Date.now() - start) / 1000) - paused;
+
+  if (log.status === "active") {
+    return Math.max(0, Math.floor((Date.now() - start) / 1000) - paused);
+  }
+
+  return 0;
 }
 
 export default function DailyTimer() {
@@ -46,31 +51,54 @@ export default function DailyTimer() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  //  Always holds the latest log — interval reads this, not the closed-over state
+  const logRef = useRef<DailyLog | null | undefined>(undefined);
+
+  const applyLog = (newLog: DailyLog | null) => {
+    logRef.current = newLog;
+    setLog(newLog);
+    //  Pre-seed elapsed immediately — no flash from 0 on refresh
+    if (newLog) setElapsed(calcElapsed(newLog));
+    else setElapsed(0);
+  };
+
+  // Initial fetch
   useEffect(() => {
     fetch("/api/daily-log/today")
       .then((r) => r.json())
-      .then((d) => setLog(d.log));
+      .then((d) => applyLog(d.log ?? null));
   }, []);
 
+  // Interval — only for active status
   useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    if (log?.status === "active") {
-      const tick = () => setElapsed(calcElapsed(log));
-      tick();
-      intervalRef.current = setInterval(tick, 1000);
-    } else if (log?.status === "paused") {
-      setElapsed(calcElapsed(log));
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
 
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [log]);
+    if (log?.status !== "active") return;
+
+    // Reads logRef.current so it always has fresh totalPausedSeconds
+    intervalRef.current = setInterval(() => {
+      const current = logRef.current;
+      if (current?.status === "active") {
+        setElapsed(calcElapsed(current));
+      }
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [log?.status]); //  Only re-run when status changes, not on every log update
 
   const handleStart = async () => {
     setLoading(true);
     const res = await fetch("/api/daily-log/start", { method: "POST" });
     const data = await res.json();
-    setLog(data.log);
+    applyLog(data.log);
     setLoading(false);
   };
 
@@ -78,7 +106,7 @@ export default function DailyTimer() {
     setLoading(true);
     const res = await fetch("/api/daily-log/pause", { method: "POST" });
     const data = await res.json();
-    setLog(data.log);
+    applyLog(data.log);
     setLoading(false);
   };
 
@@ -86,7 +114,7 @@ export default function DailyTimer() {
     setLoading(true);
     const res = await fetch("/api/daily-log/resume", { method: "POST" });
     const data = await res.json();
-    setLog(data.log);
+    applyLog(data.log);
     setLoading(false);
   };
 
@@ -94,17 +122,17 @@ export default function DailyTimer() {
     setLoading(true);
     const res = await fetch("/api/daily-log/end", { method: "POST" });
     const data = await res.json();
-    setLog(data.log);
+    applyLog(data.log);
     setLoading(false);
     setShowEndConfirm(false);
   };
 
-  // Loading skeleton
+  // --- UI unchanged below ---
+
   if (log === undefined) {
     return <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 animate-pulse h-24" />;
   }
 
-  // Not started
   if (!log) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 flex items-center justify-between">
@@ -112,25 +140,20 @@ export default function DailyTimer() {
           <p className="font-semibold text-slate-800">Start your work day</p>
           <p className="text-sm text-slate-400 mt-0.5">Click to begin your 8-hour work timer</p>
         </div>
-        <button
-          onClick={handleStart}
-          disabled={loading}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-        >
+        <button onClick={handleStart} disabled={loading}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
           {loading ? "Starting..." : "Start Day"}
         </button>
       </div>
     );
   }
 
-  // Completed
   if (log.status === "completed") {
     const totalSecs = log.endTime
       ? Math.floor((new Date(log.endTime).getTime() - new Date(log.startTime).getTime()) / 1000) - (log.totalPausedSeconds ?? 0)
       : 0;
     const eff = Math.round((totalSecs / WORK_DAY_SECS) * 100);
     const effColor = eff >= 100 ? "text-green-600" : eff >= 60 ? "text-yellow-600" : "text-red-600";
-
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
         <div className="flex items-center justify-between">
@@ -161,15 +184,11 @@ export default function DailyTimer() {
     <div className={`bg-white rounded-xl border p-5 mb-6 ${isPaused ? "border-yellow-200 bg-yellow-50/30" : "border-slate-200"}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          {isPaused ? (
-            <div className="w-3 h-3 rounded-full bg-yellow-400" />
-          ) : (
-            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-          )}
+          {isPaused
+            ? <div className="w-3 h-3 rounded-full bg-yellow-400" />
+            : <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />}
           <div>
-            <p className="font-semibold text-slate-800">
-              {isPaused ? "Day paused" : "Work day in progress"}
-            </p>
+            <p className="font-semibold text-slate-800">{isPaused ? "Day paused" : "Work day in progress"}</p>
             <p className="text-sm text-slate-400">
               Started at {formatTime12(log.startTime)}
               {isPaused && log.pausedAt && (
@@ -178,86 +197,56 @@ export default function DailyTimer() {
             </p>
           </div>
         </div>
-
         <div className="text-right">
           <p className={`text-2xl font-bold font-mono ${isPaused ? "text-yellow-600" : isOvertime ? "text-red-600" : "text-slate-800"}`}>
             {formatHMS(elapsed)}
           </p>
-          {isOvertime && !isPaused && (
-            <p className="text-xs text-red-500 font-medium">+{formatHMS(elapsed - WORK_DAY_SECS)} overtime</p>
-          )}
-          {isPaused && (
-            <p className="text-xs text-yellow-600 font-medium">Timer paused</p>
-          )}
+          {isOvertime && !isPaused && <p className="text-xs text-red-500 font-medium">+{formatHMS(elapsed - WORK_DAY_SECS)} overtime</p>}
+          {isPaused && <p className="text-xs text-yellow-600 font-medium">Timer paused</p>}
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="mb-4">
         <div className="flex justify-between text-xs text-slate-400 mb-1">
           <span>{Math.round(pct)}% of 8h</span>
-          <span>
-            {isOvertime
-              ? "Overtime"
-              : `${formatHMS(WORK_DAY_SECS - elapsed)} remaining`}
-          </span>
+          <span>{isOvertime ? "Overtime" : `${formatHMS(WORK_DAY_SECS - elapsed)} remaining`}</span>
         </div>
         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-1000 ${barColor}`}
-            style={{ width: `${pct}%` }}
-          />
+          <div className={`h-full rounded-full transition-all duration-1000 ${barColor}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
 
-      {/* End Day Confirmation */}
       {showEndConfirm && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm font-semibold text-red-700 mb-1">End your work day?</p>
           <p className="text-xs text-red-500 mb-3">This will stop the timer for the rest of the day and cannot be restarted today.</p>
           <div className="flex gap-2">
-            <button
-              onClick={handleEnd}
-              disabled={loading}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-            >
+            <button onClick={handleEnd} disabled={loading}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
               {loading ? "Ending..." : "Yes, End Day"}
             </button>
-            <button
-              onClick={() => setShowEndConfirm(false)}
-              disabled={loading}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-            >
+            <button onClick={() => setShowEndConfirm(false)} disabled={loading}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
               Cancel
             </button>
           </div>
         </div>
       )}
 
-      {/* Actions */}
       <div className="flex justify-end gap-2">
         {isPaused ? (
-          <button
-            onClick={handleResume}
-            disabled={loading}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-          >
+          <button onClick={handleResume} disabled={loading}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
             {loading ? "Resuming..." : "▶ Resume"}
           </button>
         ) : (
-          <button
-            onClick={handlePause}
-            disabled={loading}
-            className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-          >
+          <button onClick={handlePause} disabled={loading}
+            className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
             {loading ? "Pausing..." : "⏸ Pause"}
           </button>
         )}
-        <button
-          onClick={() => setShowEndConfirm(true)}
-          disabled={loading || showEndConfirm}
-          className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-        >
+        <button onClick={() => setShowEndConfirm(true)} disabled={loading || showEndConfirm}
+          className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
           End Day
         </button>
       </div>

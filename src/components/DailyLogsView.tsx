@@ -83,7 +83,7 @@ export default function DailyLogsView({
 
   return (
     <div className="p-8">
-      <div className="mb-6">
+      <div className="mb-6 text-center sm:text-left">
         <h1 className="text-2xl font-bold text-slate-900">Daily Logs</h1>
         <p className="text-slate-500 mt-1">
           {startDate || endDate ? `${startDate ?? "—"} to ${endDate ?? "today"}` : "Last 30 days"}
@@ -157,10 +157,10 @@ export default function DailyLogsView({
                           const activeSecs =
                             emp.startTime && emp.endTime
                               ? Math.max(
-                                  0,
-                                  (new Date(emp.endTime).getTime() - new Date(emp.startTime).getTime()) / 1000 -
-                                    emp.totalPausedSeconds
-                                )
+                                0,
+                                (new Date(emp.endTime).getTime() - new Date(emp.startTime).getTime()) / 1000 -
+                                emp.totalPausedSeconds
+                              )
                               : null;
                           const efficiency =
                             activeSecs !== null ? Math.round((activeSecs / WORK_DAY_SECS) * 100) : null;
@@ -168,10 +168,10 @@ export default function DailyLogsView({
                             efficiency === null
                               ? "bg-slate-100 text-slate-500"
                               : efficiency >= 100
-                              ? "bg-green-100 text-green-700"
-                              : efficiency >= 60
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700";
+                                ? "bg-green-100 text-green-700"
+                                : efficiency >= 60
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-red-100 text-red-700";
 
                           return (
                             <tr key={emp.email} className="hover:bg-slate-50 transition-colors">

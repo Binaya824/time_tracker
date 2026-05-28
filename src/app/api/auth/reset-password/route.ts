@@ -6,11 +6,11 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    const { email, oldPassword, newPassword } = await req.json();
+    const { email, newPassword /*, oldPassword */ } = await req.json();
 
-    if (!email || !oldPassword || !newPassword) {
+    if (!email || !newPassword) {
       return NextResponse.json(
-        { error: "Email, old password, and new password are required" },
+        { error: "Email and new password are required" },
         { status: 400 }
       );
     }
@@ -25,11 +25,12 @@ export async function POST(req: NextRequest) {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
+        { error: "No account found with this email" },
+        { status: 404 }
       );
     }
 
+    /* Old password verification — reserved for later
     const valid = await user.comparePassword(oldPassword);
     if (!valid) {
       return NextResponse.json(
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
+    */
 
     user.password = newPassword;
     await user.save();

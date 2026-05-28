@@ -34,9 +34,9 @@ export default function ManagerProjectsPage() {
 
   if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
 
-  return (
+  return (  
     <div className="p-8">
-      <div className="mb-6">
+      <div className="mb-6 text-center sm:text-left">
         <h1 className="text-2xl font-bold text-slate-900">My Projects</h1>
         <p className="text-slate-500 mt-1">{projects.length} project{projects.length !== 1 ? "s" : ""} assigned to you</p>
       </div>
@@ -113,11 +113,10 @@ export default function ManagerProjectsPage() {
                   <button
                     key={n}
                     onClick={() => setPage(n)}
-                    className={`w-8 h-8 text-sm rounded-lg font-medium ${
-                      n === page
+                    className={`w-8 h-8 text-sm rounded-lg font-medium ${n === page
                         ? "bg-emerald-600 text-white"
                         : "border border-slate-200 hover:bg-slate-50 text-slate-600"
-                    }`}
+                      }`}
                   >
                     {n}
                   </button>

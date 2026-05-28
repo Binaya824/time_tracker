@@ -27,22 +27,18 @@ export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal state — only for Log & Comments (timer is now inline)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [activeTab, setActiveTab] = useState<"log" | "comments">("log");
 
-  // Global timer sync — when any InlineTimer fires an action, all others re-fetch
   const [timerRefreshTick, setTimerRefreshTick] = useState(0);
   const handleTimerAction = useCallback(() => setTimerRefreshTick((n) => n + 1), []);
 
-  // Filters
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -98,71 +94,83 @@ export default function EmployeeDashboard() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
-        <p className="text-slate-500 mt-1">Track your work and log time</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+
+      {/* ── Page header — centered on mobile, left-aligned on sm+ ── */}
+      <div className="mb-5 sm:mb-6 text-center sm:text-left">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">My Tasks</h1>
+        <p className="text-slate-500 mt-1 text-sm">Track your work and log time</p>
       </div>
 
       <DailyTimer />
 
-      {/* All Tasks */}
+      {/* ── Tasks section ── */}
       <div>
         <div className="mb-4 space-y-3">
+          {/* Row: count label */}
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
               All Tasks ({total})
             </h2>
           </div>
 
-          {/* Search + Filters */}
-          <div className="flex flex-wrap gap-2">
+          {/* ── Search + Filters ── */}
+          {/* On mobile: search full-width on its own row, selects in a 2-col grid below */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {/* Search — always full row on mobile */}
             <input
               type="text"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search by name or #task no..."
-              className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full sm:flex-1 sm:min-w-[200px] px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
-            <select
-              value={statusFilter}
-              onChange={handleFilterChange(setStatusFilter)}
-              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            >
-              <option value="all">All Status</option>
-              <option value="todo">Todo</option>
-              <option value="in_progress">In Progress</option>
-              <option value="review">In Review</option>
-              <option value="completed">Completed</option>
-              <option value="on_hold">On Hold</option>
-            </select>
-            <select
-              value={priorityFilter}
-              onChange={handleFilterChange(setPriorityFilter)}
-              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            >
-              <option value="all">All Priority</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-            <select
-              value={typeFilter}
-              onChange={handleFilterChange(setTypeFilter)}
-              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            >
-              <option value="all">All Types</option>
-              <option value="Feature">Feature</option>
-              <option value="Bug">Bug</option>
-              <option value="Research">Research</option>
-              <option value="Improvement">Improvement</option>
-              <option value="Deployment">Deployment</option>
-              <option value="Testing">Testing</option>
-              <option value="Others">Others</option>
-            </select>
+
+            {/* Selects — 2-col grid on mobile, inline on sm+ */}
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <select
+                value={statusFilter}
+                onChange={handleFilterChange(setStatusFilter)}
+                className="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              >
+                <option value="all">All Status</option>
+                <option value="todo">Todo</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">In Review</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
+              </select>
+
+              <select
+                value={priorityFilter}
+                onChange={handleFilterChange(setPriorityFilter)}
+                className="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              >
+                <option value="all">All Priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+
+              <select
+                value={typeFilter}
+                onChange={handleFilterChange(setTypeFilter)}
+                className="col-span-2 sm:col-span-1 w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              >
+                <option value="all">All Types</option>
+                <option value="Feature">Feature</option>
+                <option value="Bug">Bug</option>
+                <option value="Research">Research</option>
+                <option value="Improvement">Improvement</option>
+                <option value="Deployment">Deployment</option>
+                <option value="Testing">Testing</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
           </div>
         </div>
 
+        {/* ── Task list ── */}
         {loading ? (
           <div className="text-center py-12 text-slate-400">Loading tasks...</div>
         ) : tasks.length === 0 ? (
@@ -176,14 +184,12 @@ export default function EmployeeDashboard() {
             {tasks.map((t) => (
               <div
                 key={t._id}
-                className={`bg-white rounded-xl border-2 p-5 transition-shadow hover:shadow-sm ${
-                  t.status === "in_progress"
-                    ? "border-blue-200"
-                    : "border-slate-200"
+                className={`bg-white rounded-xl border-2 p-4 sm:p-5 transition-shadow hover:shadow-sm ${
+                  t.status === "in_progress" ? "border-blue-200" : "border-slate-200"
                 }`}
               >
-                {/* Header row */}
-                <div className="flex items-start justify-between">
+                {/* ── Header row ── */}
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       {t.taskNo !== undefined && (
@@ -196,20 +202,24 @@ export default function EmployeeDashboard() {
                       <p className="text-sm text-slate-500 line-clamp-2">{t.description}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+
+                  {/* Badges — wrap on mobile */}
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 flex-shrink-0 max-w-[140px] sm:max-w-none">
                     <Badge variant={t.priority} />
                     {t.type && <Badge variant={t.type as any} />}
                     <Badge variant={t.status} />
                   </div>
                 </div>
 
-                {/* Meta row */}
-                <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-                  {t.dueDate && <span>Due: {new Date(t.dueDate).toLocaleDateString()}</span>}
-                  {!!t.dueHour && <span>Est: {t.dueHour} hr</span>}
-                </div>
+                {/* ── Meta row ── */}
+                {(t.dueDate || t.dueHour) && (
+                  <div className="flex items-center gap-4 mt-2.5 text-xs text-slate-500">
+                    {t.dueDate && <span>Due: {new Date(t.dueDate).toLocaleDateString()}</span>}
+                    {!!t.dueHour && <span>Est: {t.dueHour} hr</span>}
+                  </div>
+                )}
 
-                {/* Timer row — always visible, per task */}
+                {/* ── Inline timer ── */}
                 <div className="mt-4 pt-3 border-t border-slate-100">
                   <InlineTimer
                     taskId={t._id}
@@ -219,8 +229,8 @@ export default function EmployeeDashboard() {
                   />
                 </div>
 
-                {/* Bottom action row */}
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
+                {/* ── Bottom action row ── */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3 pt-2 border-t border-slate-50">
                   {/* Status control */}
                   <div className="flex items-center gap-2">
                     {t.status === "completed" ? (
@@ -251,7 +261,7 @@ export default function EmployeeDashboard() {
                   </div>
 
                   {/* Log & Comments links */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 sm:gap-3">
                     <button
                       onClick={() => openLogModal(t, "log")}
                       className="text-xs text-slate-500 hover:text-violet-600 font-medium transition-colors"
@@ -271,13 +281,13 @@ export default function EmployeeDashboard() {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* ── Pagination ── */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-200">
+            <p className="text-sm text-slate-500 order-2 sm:order-1">
               Page {page} of {totalPages} &mdash; {total} tasks
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center order-1 sm:order-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
@@ -321,36 +331,39 @@ export default function EmployeeDashboard() {
         )}
       </div>
 
-      {/* Modal — Time Log & Comments only (timer is now inline) */}
+      {/* ── Time Log & Comments Modal ── */}
       {selectedTask && (
         <Modal
           title={selectedTask.title}
           size="xl"
           onClose={() => setSelectedTask(null)}
         >
-          <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-100 bg-slate-50">
+          <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 border-b border-slate-100 bg-slate-50">
             <Badge variant={selectedTask.priority} />
             {selectedTask.type && <Badge variant={selectedTask.type as any} />}
             <Badge variant={selectedTask.status} />
-            <span className="text-xs text-slate-400 ml-auto">{selectedTask.project.name}</span>
+            <span className="text-xs text-slate-400 sm:ml-auto mt-1 sm:mt-0 w-full sm:w-auto">
+              {selectedTask.project.name}
+            </span>
           </div>
 
           {selectedTask.description && (
-            <div className="px-6 pt-4">
+            <div className="px-4 sm:px-6 pt-4">
               <p className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-4 py-3">
                 {selectedTask.description}
               </p>
             </div>
           )}
 
-          <div className="flex border-b border-slate-200 px-6 pt-4 gap-1">
+          {/* Tabs */}
+          <div className="flex border-b border-slate-200 px-4 sm:px-6 pt-4 gap-1">
             {(["log", "comments"] as const).map((tab) => {
               const labels = { log: "📋 Time Log", comments: "💬 Comments" };
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
+                  className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                     activeTab === tab
                       ? "border-violet-600 text-violet-600 bg-violet-50"
                       : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
@@ -366,7 +379,7 @@ export default function EmployeeDashboard() {
             <TimeLog taskId={selectedTask._id} refreshTick={timerRefreshTick} />
           </div>
           <div className={activeTab === "comments" ? "block" : "hidden"}>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <TaskComments taskId={selectedTask._id} />
             </div>
           </div>

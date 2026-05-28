@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react"; 
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "reset">("login");
@@ -11,7 +12,7 @@ export default function LoginPage() {
 
   // Reset password state
   const [resetEmail, setResetEmail] = useState("");
-  const [oldPassword, setOldPassword] = useState("");
+  // const [oldPassword, setOldPassword] = useState(""); // reserved for later
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -19,25 +20,23 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  //  Eye toggle states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Login failed");
-        return;
-      }
-
+      if (!res.ok) { setError(data.error ?? "Login failed"); return; }
       const role = data.user.role as "admin" | "manager" | "employee";
       window.location.href = `/dashboard/${role}`;
     } catch {
@@ -51,37 +50,24 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
-
     if (newPassword !== confirmPassword) {
       setError("New password and confirm password do not match.");
       return;
     }
-
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: resetEmail, oldPassword, newPassword }),
+        body: JSON.stringify({ email: resetEmail, newPassword }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Password reset failed");
-        return;
-      }
-
+      if (!res.ok) { setError(data.error ?? "Password reset failed"); return; }
       setSuccessMessage("Password reset successfully. You can now sign in.");
       setResetEmail("");
-      setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setTimeout(() => {
-        setMode("login");
-        setSuccessMessage("");
-      }, 2000);
+      setTimeout(() => { setMode("login"); setSuccessMessage(""); }, 2000);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -100,9 +86,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 text-3xl">
-            ⏱
-          </div>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 text-3xl">⏱</div>
           <h1 className="text-3xl font-bold text-white">TimeTracker</h1>
           <p className="text-slate-400 mt-1">Sign in to your workspace</p>
         </div>
@@ -113,23 +97,16 @@ export default function LoginPage() {
           </h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {error}
-            </div>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
           )}
-
           {successMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">
-              {successMessage}
-            </div>
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm">{successMessage}</div>
           )}
 
           {mode === "login" ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Email address
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
                 <input
                   type="email"
                   value={email}
@@ -140,18 +117,26 @@ export default function LoginPage() {
                 />
               </div>
 
+              {/* ✅ Password with eye toggle */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -164,11 +149,7 @@ export default function LoginPage() {
 
               <p className="text-center text-sm text-slate-500 mt-2">
                 Want to change your password?{" "}
-                <button
-                  type="button"
-                  onClick={() => switchMode("reset")}
-                  className="text-blue-600 hover:underline font-medium"
-                >
+                <button type="button" onClick={() => switchMode("reset")} className="text-blue-600 hover:underline font-medium">
                   Reset password
                 </button>
               </p>
@@ -176,9 +157,7 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Email address
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
                 <input
                   type="email"
                   value={resetEmail}
@@ -189,46 +168,57 @@ export default function LoginPage() {
                 />
               </div>
 
+              {/* Old Password — reserved for later
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Old Password
-                </label>
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  required
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Old Password</label>
+                <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required
                   placeholder="••••••••"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" />
+              </div>
+              */}
+
+              {/*  New Password with eye toggle */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
+              {/*  Confirm Password with eye toggle */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm New Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -241,11 +231,7 @@ export default function LoginPage() {
 
               <p className="text-center text-sm text-slate-500 mt-2">
                 Remember your password?{" "}
-                <button
-                  type="button"
-                  onClick={() => switchMode("login")}
-                  className="text-blue-600 hover:underline font-medium"
-                >
+                <button type="button" onClick={() => switchMode("login")} className="text-blue-600 hover:underline font-medium">
                   Back to sign in
                 </button>
               </p>
