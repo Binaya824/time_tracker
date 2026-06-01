@@ -122,6 +122,28 @@ export default function DailyTimer() {
   return (
     <div className={`bg-white border rounded-xl shadow-sm p-5 mb-5 animate-fade-in-up
       ${isPaused ? "border-amber-200" : "border-slate-200"}`}>
+      <style>{`
+        @keyframes t-bob {
+          0%,100% { transform: translateY(0px); }
+          50%      { transform: translateY(-2px); }
+        }
+        @keyframes t-leg-a {
+          0%,100% { transform: rotate(-30deg); }
+          50%      { transform: rotate(30deg); }
+        }
+        @keyframes t-leg-b {
+          0%,100% { transform: rotate(30deg); }
+          50%      { transform: rotate(-30deg); }
+        }
+        @keyframes t-head {
+          0%,100% { transform: translateY(0px) rotate(-4deg); }
+          50%      { transform: translateY(-1px) rotate(4deg); }
+        }
+        .t-body   { animation: t-bob  0.85s ease-in-out infinite; }
+        .t-leg-a  { animation: t-leg-a 0.85s ease-in-out infinite; }
+        .t-leg-b  { animation: t-leg-b 0.85s ease-in-out infinite; }
+        .t-head   { animation: t-head  0.85s ease-in-out infinite; transform-origin: 2px 8px; }
+      `}</style>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="relative flex-shrink-0">
@@ -151,9 +173,77 @@ export default function DailyTimer() {
           <span className="font-medium">{Math.round(pct)}% of 8h</span>
           <span>{isOvertime ? "Overtime!" : `${formatHMS(WORK_DAY_SECS - elapsed)} remaining`}</span>
         </div>
-        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full bg-gradient-to-r ${barGrad} transition-all duration-1000`}
-            style={{ width: `${pct}%` }} />
+        <div className="relative w-full" style={{ height: "48px" }}>
+          <div className="absolute bottom-0 inset-x-0 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full bg-gradient-to-r ${barGrad} transition-all duration-1000`}
+              style={{ width: `${pct}%` }} />
+          </div>
+          {!isPaused && (
+            <span
+              aria-hidden="true"
+              className="absolute transition-[left] duration-1000"
+              style={{
+                left: `clamp(0%, calc(${pct}% - 1.5rem), calc(100% - 3rem))`,
+                bottom: "8px",
+                filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.18))",
+              }}
+            >
+              {/* Side-profile turtle facing right */}
+              <svg width="64" height="40" viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g className="t-body">
+                  {/* Tail */}
+                  <path d="M10 26 Q5 24 4 28 Q3 30 6 29" fill="#4ade80" />
+
+                  {/* Back legs (drawn behind body) — diagonal pair A=FL+RR, B=FR+RL */}
+                  <g className="t-leg-b" style={{ transformOrigin: "16px 28px" }}>
+                    <rect x="13" y="28" width="6" height="12" rx="3" fill="#22c55e" />
+                  </g>
+                  <g className="t-leg-a" style={{ transformOrigin: "26px 28px" }}>
+                    <rect x="23" y="28" width="6" height="12" rx="3" fill="#22c55e" />
+                  </g>
+
+                  {/* Belly */}
+                  <ellipse cx="28" cy="27" rx="20" ry="7" fill="#4ade80" />
+
+                  {/* Shell dome */}
+                  <ellipse cx="27" cy="20" rx="19" ry="14" fill="#15803d" />
+                  {/* Shell top highlight band */}
+                  <ellipse cx="24" cy="15" rx="12" ry="7" fill="#166534" />
+                  {/* Shell center scute */}
+                  <ellipse cx="24" cy="15" rx="6" ry="4" fill="#14532d" opacity="0.5" />
+                  {/* Shell scute lines */}
+                  <line x1="24" y1="10" x2="24" y2="22" stroke="#14532d" strokeWidth="1.2" opacity="0.6" strokeLinecap="round" />
+                  <line x1="15" y1="14" x2="33" y2="18" stroke="#14532d" strokeWidth="1" opacity="0.5" strokeLinecap="round" />
+                  <line x1="33" y1="14" x2="15" y2="18" stroke="#14532d" strokeWidth="1" opacity="0.5" strokeLinecap="round" />
+                  {/* Shell shine */}
+                  <ellipse cx="20" cy="12" rx="5" ry="3" fill="white" opacity="0.13" />
+
+                  {/* Front legs (drawn in front of body) */}
+                  <g className="t-leg-a" style={{ transformOrigin: "36px 28px" }}>
+                    <rect x="33" y="28" width="6" height="12" rx="3" fill="#4ade80" />
+                  </g>
+                  <g className="t-leg-b" style={{ transformOrigin: "44px 28px" }}>
+                    <rect x="41" y="28" width="6" height="12" rx="3" fill="#4ade80" />
+                  </g>
+
+                  {/* Neck */}
+                  <ellipse cx="49" cy="25" rx="6" ry="5" fill="#4ade80" />
+
+                  {/* Head */}
+                  <g className="t-head">
+                    <ellipse cx="57" cy="22" rx="7" ry="6" fill="#4ade80" />
+                    {/* Eye */}
+                    <circle cx="60" cy="19" r="1.8" fill="#14532d" />
+                    <circle cx="60.7" cy="18.3" r="0.6" fill="white" />
+                    {/* Nostril */}
+                    <circle cx="63" cy="22" r="0.8" fill="#166534" opacity="0.7" />
+                    {/* Mouth */}
+                    <path d="M61 24 Q63 25.5 64 24" stroke="#166534" strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.6" />
+                  </g>
+                </g>
+              </svg>
+            </span>
+          )}
         </div>
       </div>
 
