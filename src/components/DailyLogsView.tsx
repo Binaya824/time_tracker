@@ -102,10 +102,13 @@ export default function DailyLogsView({
   }, [router]);
 
   return (
-    <div className="p-8">
-      <div className="mb-6 text-center sm:text-left">
-        <h1 className="text-2xl font-bold text-slate-900">Daily Logs</h1>
-        <p className="text-slate-500 mt-1">
+    <div className="w-full p-4 sm:p-6 lg:p-8">
+      <div className="mb-6">
+        <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${accentColor === "indigo" ? "text-indigo-600" : "text-emerald-600"}`}>
+          {accentColor === "indigo" ? "Admin" : "Manager"}
+        </p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Daily Logs</h1>
+        <p className="text-slate-500 mt-1 text-sm">
           {startDate || endDate ? `${startDate ?? "—"} to ${endDate ?? "today"}` : "Last 30 days"}
           {totalDates > 0 && (
             <span className="ml-2 text-slate-400">· {totalDates} date{totalDates !== 1 ? "s" : ""}</span>
@@ -143,16 +146,16 @@ export default function DailyLogsView({
       />
 
       {pagedLogs.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400">
+        <div className="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-card p-12 text-center text-slate-400">
           No logs found for the selected filters.
         </div>
       ) : (
         <>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {pagedLogs.map((day) => {
               const empList = Object.values(day.employees);
               return (
-                <div key={day.date} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div key={day.date} className="bg-white rounded-2xl ring-1 ring-slate-900/5 shadow-card overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
                     <span className="font-semibold text-slate-800">{formatDate(day.date)}</span>
                     <span className="text-sm text-slate-500">
