@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import DailyLogsFilters from "@/components/DailyLogsFilters";
 
 const WORK_DAY_SECS = 8 * 3600;
@@ -10,6 +14,7 @@ export type DayEmployeeLog = {
   startTime: string | null;
   endTime: string | null;
   totalPausedSeconds: number;
+  status: string | null;  
 };
 
 export type DayLog = {
@@ -41,11 +46,11 @@ function formatSecs(s: number) {
 }
 
 function formatTime(isoStr: string) {
-  return new Date(isoStr).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
+  return new Date(isoStr).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString(undefined, {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
     weekday: "short", year: "numeric", month: "short", day: "numeric",
   });
 }
@@ -60,6 +65,12 @@ function accent(color: "indigo" | "emerald") {
   return color === "indigo"
     ? { activePill: "bg-indigo-600 text-white", inactivePill: "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" }
     : { activePill: "bg-emerald-600 text-white", inactivePill: "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50" };
+}
+
+// ← added status dot
+function StatusDot({ status, endTime }: { status: string | null; endTime: string | null }) {
+  if (status === "active") return <span className="w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />;
+  return <span className="w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />;
 }
 
 export default function DailyLogsView({
@@ -80,6 +91,15 @@ export default function DailyLogsView({
 }: Props) {
   const ac = accent(accentColor);
   const baseParams = new URLSearchParams(baseParamsStr);
+  const router = useRouter();
+
+  // ← auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [router]);
 
   return (
     <div className="p-8">
@@ -175,10 +195,14 @@ export default function DailyLogsView({
 
                           return (
                             <tr key={emp.email} className="hover:bg-slate-50 transition-colors">
+                              {/* ← updated employee cell */}
                               <td className="px-5 py-3">
                                 <div className="flex items-center gap-2">
-                                  <div className={`w-7 h-7 rounded-full ${accentColor === "indigo" ? "bg-indigo-100 text-indigo-700" : "bg-emerald-100 text-emerald-700"} flex items-center justify-center text-xs font-bold flex-shrink-0`}>
-                                    {emp.name.charAt(0).toUpperCase()}
+                                  <div className="relative flex-shrink-0">
+                                    <div className={`w-7 h-7 rounded-full ${accentColor === "indigo" ? "bg-indigo-100 text-indigo-700" : "bg-emerald-100 text-emerald-700"} flex items-center justify-center text-xs font-bold`}>
+                                      {emp.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <StatusDot status={emp.status} endTime={emp.endTime} />
                                   </div>
                                   <span className="font-medium text-slate-900">{emp.name}</span>
                                 </div>
@@ -191,7 +215,9 @@ export default function DailyLogsView({
                                 {emp.endTime ? formatTime(emp.endTime) : <span className="text-slate-400">—</span>}
                               </td>
                               <td className="px-5 py-3 text-center">
-                                <span className="font-semibold text-slate-800">{formatSecs(emp.totalSeconds)}</span>
+                                <span className="font-semibold text-slate-800">
+                                  {activeSecs !== null ? formatSecs(activeSecs) : formatSecs(emp.totalSeconds)}
+                                </span>
                               </td>
                               <td className="px-5 py-3 text-center">
                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${effColor}`}>
