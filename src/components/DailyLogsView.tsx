@@ -14,7 +14,7 @@ export type DayEmployeeLog = {
   startTime: string | null;
   endTime: string | null;
   totalPausedSeconds: number;
-  status: string | null;  
+  status: string | null;
 };
 
 export type DayLog = {
@@ -68,9 +68,10 @@ function accent(color: "indigo" | "emerald") {
 }
 
 // ← added status dot
-function StatusDot({ status, endTime }: { status: string | null; endTime: string | null }) {
+function StatusDot({ status }: { status: string | null }) {
   if (status === "active") return <span className="w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />;
-  return <span className="w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />;
+  if (status === "completed") return <span className="w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />;
+  return null;
 }
 
 export default function DailyLogsView({
@@ -205,7 +206,7 @@ export default function DailyLogsView({
                                     <div className={`w-7 h-7 rounded-full ${accentColor === "indigo" ? "bg-indigo-100 text-indigo-700" : "bg-emerald-100 text-emerald-700"} flex items-center justify-center text-xs font-bold`}>
                                       {emp.name.charAt(0).toUpperCase()}
                                     </div>
-                                    <StatusDot status={emp.status} endTime={emp.endTime} />
+                                    <StatusDot status={emp.status} />
                                   </div>
                                   <span className="font-medium text-slate-900">{emp.name}</span>
                                 </div>
@@ -219,7 +220,7 @@ export default function DailyLogsView({
                               </td>
                               <td className="px-5 py-3 text-center">
                                 <span className="font-semibold text-slate-800">
-                                  {activeSecs !== null ? formatSecs(activeSecs) : formatSecs(emp.totalSeconds)}
+                                  {activeSecs !== null ? formatSecs(activeSecs) : <span className="text-slate-400">—</span>}
                                 </span>
                               </td>
                               <td className="px-5 py-3 text-center">

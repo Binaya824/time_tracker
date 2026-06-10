@@ -63,12 +63,13 @@ export default async function DailyLogsPage({
   if (endDate) (dlFilter.date as Record<string, string>).$lte = endDate;
   const dailyLogDocs = await DailyLog.find(dlFilter);
 
-  const dlMap: Record<string, { startTime: Date; endTime: Date | null; totalPausedSeconds: number }> = {};
+  const dlMap: Record<string, { startTime: Date; endTime: Date | null; totalPausedSeconds: number; status: string }> = {}; // ✅
   for (const dl of dailyLogDocs) {
     dlMap[`${dl.user.toString()}-${dl.date}`] = {
       startTime: dl.startTime,
       endTime: dl.endTime ?? null,
       totalPausedSeconds: dl.totalPausedSeconds,
+        status: dl.status, // ✅
     };
   }
 
@@ -90,6 +91,8 @@ export default async function DailyLogsPage({
         startTime: dl?.startTime?.toISOString() ?? null,
         endTime: dl?.endTime?.toISOString() ?? null,
         totalPausedSeconds: dl?.totalPausedSeconds ?? 0,
+          status: (dl?.status as "active" | "paused" | "completed" | null) ?? null, // ✅
+
       };
     }
     dateMap[dateKey].employees[uid].totalSeconds += dur;
@@ -108,11 +111,15 @@ export default async function DailyLogsPage({
         startTime: dl.startTime?.toISOString() ?? null,
         endTime: dl.endTime?.toISOString() ?? null,
         totalPausedSeconds: dl.totalPausedSeconds,
+          status: (dl.status as "active" | "paused" | "completed" | null) ?? null, // ✅
+
       };
     } else {
       dateMap[dl.date].employees[uid].startTime = dl.startTime?.toISOString() ?? null;
       dateMap[dl.date].employees[uid].endTime = dl.endTime?.toISOString() ?? null;
       dateMap[dl.date].employees[uid].totalPausedSeconds = dl.totalPausedSeconds;
+        dateMap[dl.date].employees[uid].status = (dl.status as "active" | "paused" | "completed" | null) ?? null; // ✅
+
     }
   }
 
