@@ -69,7 +69,7 @@ export default async function DailyLogsPage({
       startTime: dl.startTime,
       endTime: dl.endTime ?? null,
       totalPausedSeconds: dl.totalPausedSeconds,
-        status: dl.status, // ✅
+      status: dl.status, // ✅
     };
   }
 
@@ -91,7 +91,7 @@ export default async function DailyLogsPage({
         startTime: dl?.startTime?.toISOString() ?? null,
         endTime: dl?.endTime?.toISOString() ?? null,
         totalPausedSeconds: dl?.totalPausedSeconds ?? 0,
-          status: (dl?.status as "active" | "paused" | "completed" | null) ?? null, // ✅
+        status: (dl?.status as "active" | "paused" | "completed" | null) ?? null, // ✅
 
       };
     }
@@ -111,14 +111,14 @@ export default async function DailyLogsPage({
         startTime: dl.startTime?.toISOString() ?? null,
         endTime: dl.endTime?.toISOString() ?? null,
         totalPausedSeconds: dl.totalPausedSeconds,
-          status: (dl.status as "active" | "paused" | "completed" | null) ?? null, // ✅
+        status: (dl.status as "active" | "paused" | "completed" | null) ?? null, // ✅
 
       };
     } else {
       dateMap[dl.date].employees[uid].startTime = dl.startTime?.toISOString() ?? null;
       dateMap[dl.date].employees[uid].endTime = dl.endTime?.toISOString() ?? null;
       dateMap[dl.date].employees[uid].totalPausedSeconds = dl.totalPausedSeconds;
-        dateMap[dl.date].employees[uid].status = (dl.status as "active" | "paused" | "completed" | null) ?? null; // ✅
+      dateMap[dl.date].employees[uid].status = (dl.status as "active" | "paused" | "completed" | null) ?? null; // ✅
 
     }
   }

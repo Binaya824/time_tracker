@@ -2,7 +2,7 @@ import cron from "node-cron";
 import connectDB from "./db";
 import DailyLog from "./models/DailyLog";
 
-cron.schedule("59 23 * * *", async () => {
+    cron.schedule("59 23 * * *", async () => {
 
     // DB Connection error
     try {
