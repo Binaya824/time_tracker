@@ -33,7 +33,8 @@ export default function InlineTimer({ taskId, refreshTick, onAction, readOnly = 
       if (data.timerStatus === "running" && startTime)
         setDisplay(data.totalCompletedSeconds + Math.floor((Date.now() - startTime.getTime()) / 1000));
       else if (data.timerStatus === "paused") setDisplay(data.totalCompletedSeconds);
-      else setDisplay(0);
+      else setDisplay(data.totalCompletedSeconds);
+
     } catch { /* keep previous */ }
     finally { setLoading(false); }
   }, []);
@@ -80,7 +81,7 @@ export default function InlineTimer({ taskId, refreshTick, onAction, readOnly = 
   const pillCls = timerStatus === "running"
     ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
     : timerStatus === "paused" ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-    : "bg-slate-100 text-slate-400";
+      : "bg-slate-100 text-slate-400";
   const pillLabel = timerStatus === "running" ? "Running" : timerStatus === "paused" ? "Paused" : "Not started";
 
   const btnBase = "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-xl transition-all duration-200 disabled:opacity-50 cursor-pointer active:scale-90";

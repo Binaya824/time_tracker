@@ -24,14 +24,13 @@ export async function GET(req: NextRequest) {
 
     // Total completed seconds (stopped + paused entries)
     const completedEntries = await TimeEntry.find({
-      task: taskId,
-      user: authUser.userId,
-      status: { $in: ["stopped", "paused"] },
-    });
+  task: taskId,
+  user: authUser.userId,
+  status: { $in: ["stopped", "paused", "completed"] },
+});
     const totalCompletedSeconds = completedEntries.reduce(
-      (sum, e) => sum + (e.duration ?? 0),
-      0
-    );
+    (sum, e) => sum + (e.duration ?? 0), 0
+);
 
     let timerStatus: "idle" | "running" | "paused" = "idle";
     let runningEntry = null;

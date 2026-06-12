@@ -75,8 +75,9 @@ export default async function DailyLogsPage({
 
   const dateMap: Record<string, DayLog> = {};
 
-  for (const e of entries) {
+for (const e of entries) {
     const u = e.user as unknown as PopUser;
+    if (!u || !u._id) continue; // ✅
     const uid = u._id.toString();
     const dateKey = e.startTime.toISOString().slice(0, 10);
     const dur = e.duration ?? 0;
