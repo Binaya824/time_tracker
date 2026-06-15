@@ -244,7 +244,8 @@ export default function EmployeeDashboard() {
                     taskId={t._id}
                     refreshTick={timerRefreshTick}
                     onAction={handleTimerAction}
-                    readOnly={t.status === "review"}
+                    readOnly={t.status === "review" || t.status === "completed"}
+
                   />
                 </div>
 

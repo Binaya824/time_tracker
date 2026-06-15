@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Task from "@/lib/models/Task";
+import TimeEntry from "@/lib/models/TimeEntry";  
 import { getAuthUser } from "@/lib/auth";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,12 +33,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     await connectDB();
     const { id } = await params;
     const body = await req.json();
-    console.log("[tasks PUT] dueHour received:", body.dueHour, typeof body.dueHour);
 
     const task = await Task.findById(id);
     if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
 
-    // Employees can only update status
     if (authUser.role === "employee") {
       if (task.allowEmployeeStatusUpdate === false) {
         return NextResponse.json({ error: "You do not have permission to update the status of this task" }, { status: 403 });
@@ -49,9 +48,33 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       if (body.status && !allowedStatuses.includes(body.status)) {
         return NextResponse.json({ error: "Employees can only set status to in_progress or review" }, { status: 403 });
       }
+
+      //  Auto stop timer when setting review
+      if (body.status === "review") {
+        const running = await TimeEntry.findOne({
+          task: id,
+          user: authUser.userId,
+          status: "running",
+        });
+        if (running) {
+          const endTime = new Date();
+          running.endTime = endTime;
+          running.duration = Math.floor(
+            (endTime.getTime() - running.startTime.getTime()) / 1000
+          );
+          running.status = "stopped";
+          await running.save();
+        }
+
+        //   Stop paused entry too
+        await TimeEntry.updateMany(
+          { task: id, user: authUser.userId, status: "paused" },
+          { $set: { status: "stopped" } }
+        );
+      }
+
       task.status = body.status ?? task.status;
     } else {
-      // Manager/Admin can update everything
       Object.assign(task, body);
     }
 

@@ -11,22 +11,32 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const { taskId } = await req.json();
 
-    // Make sure there is no running timer
-    const running = await TimeEntry.findOne({
+    //  Check already running
+    const alreadyRunning = await TimeEntry.findOne({
       task: taskId,
       user: authUser.userId,
       status: "running",
     });
-
-    if (running) {
-      return NextResponse.json({ error: "Timer is already running" }, { status: 409 });
+    if (alreadyRunning) {
+      return NextResponse.json({ error: "Timer already running" }, { status: 409 });
     }
 
-    // Create a fresh entry (resume = new session)
+    //  paused entry
+    const paused = await TimeEntry.findOne({
+      task: taskId,
+      user: authUser.userId,
+      status: "paused",
+    }).sort({ createdAt: -1 });
+
+    if (!paused) {
+      return NextResponse.json({ error: "No paused timer found" }, { status: 404 });
+    }
+
+    //   Create new running entry (paused entry keeps its duration)
     const entry = await TimeEntry.create({
       task: taskId,
       user: authUser.userId,
-      startTime: new Date(),
+      startTime: new Date(),  
       status: "running",
     });
 
