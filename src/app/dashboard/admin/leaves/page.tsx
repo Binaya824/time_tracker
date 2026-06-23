@@ -164,7 +164,15 @@ export default function AdminLeavesPage() {
                                             </span>
                                         </div>
                                         <p className="text-xs text-indigo-600 font-medium mt-0.5">{leave.user.name} · {leave.user.email}</p>
-                                        <p className="text-xs text-slate-500 mt-0.5">{leave.fromDate} → {leave.toDate}</p>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                                                {leave.fromDate.split("-").reverse().join("-")}
+                                            </span>
+                                            <span className="text-slate-400 text-xs">→</span>
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                                                {leave.toDate.split("-").reverse().join("-")}
+                                            </span>
+                                        </div>
                                         <p className="text-sm text-slate-600 mt-2">{leave.detail}</p>
 
                                         {leave.status === "rejected" && leave.rejectionReason && (

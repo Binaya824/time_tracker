@@ -3,7 +3,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface ILeave extends Document {
   _id: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
-  leaveType: "sick" | "planned" | "other";
+  leaveType: "sick" | "planned";
   subject: string;
   detail: string;
   fromDate: string;
@@ -19,7 +19,7 @@ export interface ILeave extends Document {
 const LeaveSchema = new Schema<ILeave>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    leaveType: { type: String, enum: ["sick", "planned", "other"], required: true },
+    leaveType: { type: String, enum: ["sick", "planned"], required: true },
     subject: { type: String, required: true, trim: true },
     detail: { type: String, required: true, trim: true },
     fromDate: { type: String, required: true },

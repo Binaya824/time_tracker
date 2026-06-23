@@ -99,9 +99,9 @@ export default function EmployeeLeavePage() {
                                         key={type}
                                         onClick={() => setLeaveType(type)}
                                         className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${leaveType === type
-                                                ? `${cfg.cls} ring-2 ring-offset-1 ${type === "sick" ? "ring-rose-400" : type === "planned" ? "ring-blue-400" : "ring-slate-400"
-                                                }`
-                                                : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                                            ? `${cfg.cls} ring-2 ring-offset-1 ${type === "sick" ? "ring-rose-400" : type === "planned" ? "ring-blue-400" : "ring-slate-400"
+                                            }`
+                                            : "border-slate-200 text-slate-500 hover:bg-slate-50"
                                             }`}
                                     >
                                         <Icon className="w-4 h-4" />
@@ -225,7 +225,15 @@ export default function EmployeeLeavePage() {
                                                     {tCfg.label}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-0.5">{leave.fromDate} → {leave.toDate}</p>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                                                    {leave.fromDate.split("-").reverse().join("-")}
+                                                </span>
+                                                <span className="text-slate-400 text-xs">→</span>
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+                                                    {leave.toDate.split("-").reverse().join("-")}
+                                                </span>
+                                            </div>
                                             <p className="text-sm text-slate-600 mt-2 line-clamp-2">{leave.detail}</p>
 
                                             {/* Rejection reason */}
