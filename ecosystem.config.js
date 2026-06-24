@@ -5,8 +5,8 @@ module.exports = {
     args: "start -p 6069",
     interpreter: "node",
     watch: false,
-    instances: 1,
-    exec_mode: "fork",  
+    instances: 1,          // ✅ only 1 instance
+    exec_mode: "fork",     // ✅ fork not cluster
     autorestart: true,
     max_memory_restart: "1G",
     env: {

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, FolderKanban, Users, TrendingUp,
-  Clock, CheckSquare, LogOut, Menu, X, Timer,
+  Clock, CheckSquare, LogOut, Menu, X, Timer, CalendarDays,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -38,21 +38,24 @@ const roleConfig = {
   },
 };
 
-const adminLinks   = [
+const adminLinks = [
   { href: "/dashboard/admin",             label: "Overview",    Icon: LayoutDashboard },
   { href: "/dashboard/admin/projects",    label: "Projects",    Icon: FolderKanban },
   { href: "/dashboard/admin/users",       label: "Users",       Icon: Users },
   { href: "/dashboard/admin/performance", label: "Performance", Icon: TrendingUp },
   { href: "/dashboard/admin/timelogs",    label: "Daily Logs",  Icon: Clock },
+  { href: "/dashboard/admin/leaves",      label: "Leaves",      Icon: CalendarDays },
 ];
 const managerLinks = [
   { href: "/dashboard/manager",             label: "Overview",    Icon: LayoutDashboard },
   { href: "/dashboard/manager/projects",    label: "My Projects", Icon: FolderKanban },
   { href: "/dashboard/manager/performance", label: "Performance", Icon: TrendingUp },
   { href: "/dashboard/manager/timelogs",    label: "Daily Logs",  Icon: Clock },
+  { href: "/dashboard/manager/leaves",      label: "Leaves",      Icon: CalendarDays },
 ];
 const employeeLinks = [
-  { href: "/dashboard/employee", label: "My Tasks", Icon: CheckSquare },
+  { href: "/dashboard/employee",       label: "My Tasks", Icon: CheckSquare },
+  { href: "/dashboard/employee/leave", label: "Leave",    Icon: CalendarDays },
 ];
 
 export default function Sidebar({ role, name, email }: SidebarProps) {
